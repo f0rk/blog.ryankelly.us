@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="keywords" content="">
+
+        <title>blog</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+        <style type="text/css">
+            body, html {
+                font-family: "Open Sans", Arial, sans-serif;
+                font-size: 16px;
+                color: #333;
+            }
+
+            code {
+                font-family: monospace;
+            }
+
+            header > h1 {
+                font-size: 50px;
+            }
+
+            a {
+                color: #333;
+                text-decoration: none;
+            }
+
+            a:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1><a href="/">blog?</a></h1>
+        </header>
+
+        <div class="post">
+            <h1>Break On Attribute Change</h1>
+            <h3>13 June 2016</h3>
+
+            <p>
+                Today I discovered a neat feature available in both Firefox and Chrome: break
+                on attribute change. This allows us to break when some code changes a DOM element attribute.
+            </p>
+
+            <p>
+                I was debugging an issue where some code involved with adding and removing
+                styles for error indication on a table was incorrectly doing the following:
+            </p>
+
+<pre>$("td").each(function() {
+    if (!$(this).hasClass("qc-error")) {
+        $(this.parentNode).attr("style", "");
+    } else {
+        $(this.parentNode).attr("style", "border: 1px solid #f00; background: #eee");
+    }
+});</pre>
+
+            <p>
+                The templating code was responsible for the initial hiding of the row and would
+                insert this style when rendered:
+            </p>
+
+<pre>&lt;tr id="second-fee-row" ${'style="display: none"' if bid.fee_type != constants.FEE_TYPE_PER else '' | n}&gt;</pre>
+
+            <p>
+                Additionally, some code elsewhere on the page was also attempting to manage
+                this row by setting the display in response to changes in a dropdown:
+            </p>
+
+<pre>if ($("#fee-type").val() !== constants.FEE_TYPE_PER) {
+    $("#second-fee-row").css("display", "none");
+} else {
+    $("#second-fee-row").css("display", "table-row");
+}</pre>
+
+            <p>
+                After first verifying that Firefox thought it should display the element, I
+                looked at the page source. Checked out. <code>display: none</code> was definitely
+                there.
+            </p>
+
+            <p>
+                Then I spent some time looking for modifications to <code>#second-fee-row</code>. I
+                inspected all the sites that were modifying that row (by looking for that id).
+                Nope. Nothing setting the style to empty.
+            </p>
+
+            <p>
+                After a quick google to confirm that <code>display: none</code> hadn't suddenly become
+                unsupported, I came across this Stack Overflow link:
+                <a href="https://stackoverflow.com/questions/13303650/break-when-style-has-changed-in-chrome-dev-tools">https://stackoverflow.com/questions/13303650/break-when-style-has-changed-in-chrome-dev-tools</a>.
+                This in turn led me to search for the same feature in Firefox (my day-to-day
+                browser) which resulted in: <a href="https://getfirebug.com/doc/breakpoints/demo.html">https://getfirebug.com/doc/breakpoints/demo.html</a>.
+            </p>
+
+            <p>
+                I went ahead and set such a breakpoint on the afflicted element. Lo and behold,
+                the offending code was found and repaired with:
+            </p>
+
+<pre>$("td").each(function() {
+    if (!$(this).hasClass("qc-error")) {
+        $(this.parentNode).css({
+            border: null,
+            background: null
+        });
+    } else {
+        $(this.parentNode).css({
+            border: "1px solid #f00",
+            background: "#eee"
+        });
+    }
+});</pre>
+
+            <p>
+                Not a perfect solution (should probably track the original value instead) but
+                acceptable in this case.
+            </p>
+        </div>
+    </body>
+</html>
