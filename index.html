@@ -19,14 +19,58 @@
                 font-family: "Open Sans", Arial, sans-serif;
                 font-size: 16px;
                 color: #333;
+                margin: 0;
+                padding: 0;
+                min-width: 400;
+            }
+
+            @media only screen and (max-width: 480px) {
+                body, html {
+                    font-size: 12px;
+                }
             }
 
             code {
                 font-family: monospace;
             }
 
+            pre {
+                overflow: auto;
+                word-wrap: normal;
+                white-space: pre;
+            }
+
+            div.container {
+                width: 60%;
+                margin: 0px auto;
+            }
+
+            @media only screen and (max-width: 768px) {
+                div.container {
+                    width: 90%;
+                    margin: 0 auto;
+                }
+            }
+
+            @media only screen and (max-width: 480px) {
+                div.container {
+                    width: 99%;
+                    margin: 0 auto;
+                }
+            }
+
             header > h1 {
                 font-size: 50px;
+            }
+
+            @media only screen and (max-width: 480px) {
+                h1 {
+                    font-size: 20px;
+                }
+
+                header > h1 {
+                    font-size: 30px;
+                }
             }
 
             a {
@@ -40,18 +84,30 @@
         </style>
     </head>
     <body>
-        <header>
-            <h1><a href="/">blog?</a></h1>
-        </header>
+        <div class="container">
+            <header>
+                <h1><a href="/">blog?</a></h1>
+            </header>
 
-        <a class="post" href="/2016/06/13/break-on-attribute-change.html">
-            <h1>Break On Attribute Change</h1>
-            <h3>13 June 2016</h3>
+            <a class="post" href="/2016/06/20/my-tests-are-slow.html">
+                <h1>My Tests Are Slow</h1>
+                <h3>20 June 2016</h3>
 
-            <p>
-                Today I discovered a neat feature available in both Firefox and Chrome: break
-                on attribute change. This allows us to break when some code changes a DOM element attribute.
-            </p>
-	</a>
+                <p>
+                    The other day a coworker was remarking that their test suite
+                    ran much more slowly than mine. Much more slowly than the build server, too.
+                </p>
+            </a>
+
+            <a class="post" href="/2016/06/13/break-on-attribute-change.html">
+                <h1>Break On Attribute Change</h1>
+                <h3>13 June 2016</h3>
+
+                <p>
+                    Today I discovered a neat feature available in both Firefox and Chrome: break
+                    on attribute change. This allows us to break when some code changes a DOM element attribute.
+                </p>
+            </a>
+        </div>
     </body>
 </html>
