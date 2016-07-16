@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="keywords" content="">
+
+        <title>blog</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+        <style type="text/css">
+            body, html {
+                font-family: "Open Sans", Arial, sans-serif;
+                font-size: 16px;
+                color: #333;
+                margin: 0;
+                padding: 0;
+                min-width: 400;
+            }
+
+            @media only screen and (max-width: 480px) {
+                body, html {
+                    font-size: 12px;
+                }
+            }
+
+            code {
+                font-family: monospace;
+            }
+
+            pre {
+                overflow: auto;
+                word-wrap: normal;
+                white-space: pre;
+            }
+
+            div.container {
+                width: 60%;
+                margin: 0px auto;
+            }
+
+            div.container p {
+                text-align: justify;
+            }
+
+            @media only screen and (max-width: 768px) {
+                div.container {
+                    width: 90%;
+                    margin: 0 auto;
+                }
+            }
+
+            @media only screen and (max-width: 480px) {
+                div.container {
+                    width: 99%;
+                    margin: 0 auto;
+                }
+            }
+
+            header > h1 {
+                font-size: 50px;
+            }
+
+            @media only screen and (max-width: 480px) {
+                h1 {
+                    font-size: 20px;
+                }
+
+                header > h1 {
+                    font-size: 30px;
+                }
+            }
+
+            a {
+                color: #333;
+                text-decoration: none;
+            }
+
+            a:hover {
+                text-decoration: underline;
+            }
+
+            .small {
+                font-size: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1><a href="/">blog?</a></h1>
+            </header>
+
+            <div class="post">
+                <h1>Subresource Integrity</h1>
+                <h3>16 July 2016</h3>
+
+                <p>
+                    Subresource Integrity (SRI for short) is a technique that
+                    allows you to ensure that your assets are being served
+                    unaltered. For example:
+                </p>
+
+<pre>&lt;script src="https://code.jquery.com/jquery-3.1.0.slim.min.js"&gt;&lt;/script&gt;</pre>
+
+                <p>
+                    This is something you have probably seen fairly commonly.
+                    CDN, or content delivery network, served assets improve
+                    page load times by distributing the content from locations
+                    physically closer to the end user. They also allow you to
+                    offload the bandwidth and resposibility for actually
+                    serving your assets.
+                </p>
+
+                <p>
+                    But what happens when that third party is compromised? If
+                    all your site does is host cat gifs, it's probably not the
+                    end of the world. When you're dealing with sensitive
+                    information or accepting payments, however, a compromise
+                    could allow an attacker to steal valuable user information.
+                </p>
+
+                <p>
+                    SRI allows us to add a cryptographically secure hash to our
+                    tags so that we can indicate what the actual signature of
+                    our sources should be. That way, if an attacker compromises
+                    a third party displaying assets on your page, they will not
+                    be able to serve you malicious code (or other assets, as
+                    we'll see below):
+                </p>
+
+<pre>&lt;script src="https://code.jquery.com/jquery-3.1.0.slim.min.js" integrity="sha384-uZ2OkdfFeYRaX81T8ZKlaMt5UJ7DkMwO8z95CYTpAtu9t6W7FaHvsa3xvalfNrnn" &gt;&lt;/script&gt;</pre>
+
+                <h3>How Do I Generate That?</h3>
+
+                <p>
+                    There are a few ways to generate the hash itself. The
+                    "hash" is actually the base64-encoded representation of the
+                    binary digest of the resource. You could put together a
+                    simple shell pipeline:
+                </p>
+
+<pre>cat jquery-3.1.0.slim.min.js | openssl dgst -sha384 -binary | openssl enc -base64 -A</pre>
+
+                <p>
+                    But typing this over and over gets old quick. There's also
+                    <a href="https://srihash.org">https://srihash.org</a>,
+                    which will allow you to provide the URL of the resource and
+                    generate the hash for you.
+                </p>
+
+                <p>
+
+                    There's also my favorite method (shameless plug incoming):
+                    <a href="https://github.com/f0rk/srihash">https://github.com/f0rk/srihash</a>.
+                    srihash provides a simple command line tool to generate
+                    subresource integrity hashes from local files or remote
+                    urls:
+                </p>
+
+<pre>~$ srihash https://code.jquery.com/jquery-3.1.0.slim.min.js
+sha384-uZ2OkdfFeYRaX81T8ZKlaMt5UJ7DkMwO8z95CYTpAtu9t6W7FaHvsa3xvalfNrnn</pre>
+
+                <h3>What Supports SRI?</h3>
+
+                <p>
+                    Two elements support SRI: <code>script</code> and
+                    <code>link</code>. Simply include the hash of the resource
+                    in the integrity attribute. If the script served varies
+                    (for example, different users see different scripts) you
+                    specify multiple whitespace separated hashes. If any hash
+                    matches, the resource will load.
+                </p>
+
+                <p>
+                    SRI is an experimental feature. At the moment, it is only
+                    supported by Chrome, Firefox, and Opera:
+                    <a href="http://caniuse.com/#feat=subresource-integrity">http://caniuse.com/#feat=subresource-integrity</a>.
+                </p>
+
+                <h3>Conclusion</h3>
+
+                <p>
+                    SRI is one of many techniques to prevent the loading and
+                    execution of unexpected code. Other techniques, like
+                    content security policies, CORS and CORS attributes, and
+                    the meta referrer tag, should also be utilized as part of a
+                    scheme to make sure your data is protected.
+                </p>
+
+                <p>
+                    You can also find this article here:
+                    <a href="https://truveris.github.io/articles/subresource-integrity/">https://truveris.github.io/articles/subresource-integrity/</a>.
+                </p>
+            </div>
+        </div>
+    </body>
+</html>
