@@ -85,6 +85,10 @@
             a:hover {
                 text-decoration: underline;
             }
+
+            .small {
+                font-size: 10px;
+            }
         </style>
     </head>
     <body>
@@ -93,7 +97,7 @@
                 <h1><a href="/">blog?</a></h1>
             </header>
 
-            <a class="post" href="/2016/07/30/refactoring-preserving-history.html">
+            <div class="post">
                 <h1>Refactoring, Preserving History</h1>
                 <h3>30 July 2016</h3>
 
@@ -101,68 +105,86 @@
                     At work and in many open source projects there is a common
                     pattern of how to manage your code: everything in separate
                     projects. While this keeps everything separate it does
-                    introduce some other challenges.
+                    introduce some other challenges:
                 </p>
-            </a>
 
-            <a class="post" href="/2016/07/30/vim-backupcopy-webpack-dev-server.html">
-                <h1><code>vim</code>, <code>backupcopy</code> and webpack dev server</h1>
-                <h3>30 July 2016</h3>
+                <ul>
+                    <li>
+                        Branches or tags (depending on your workflow) must be
+                        created in every repository for every release if you
+                        are using versioned releases.
+                    </li>
+
+                    <li>
+                        Certain code elements may be repeated in each repo (for
+                        example, <code>setup.py</code> or the repository's
+                        <code>__init__.py</code> file).
+                    </li>
+
+                    <li>
+                        Certain configuration files may need to be repeated
+                        (for example, <code>.coveragerc</code>).
+                    </li>
+
+                    <li>
+                        Organization patterns for files and naming conventions
+                        may begin to vary between repos.
+                    </li>
+
+                    <li>
+                        Moving code between repos or out of a repo destroys the
+                        history of the moved files.
+                    </li>
+                </ul>
 
                 <p>
-                    This is just a quick note about what seems to be a common
-                    gotcha when using vim to develop with webpack's dev server.
+                    We'll be touching on this last item.
                 </p>
-            </a>
+                
+                <p>
+                    A colleague asked me the other day how to preserve the
+                    history of some files as they were migrated into another
+                    repo. This is something we've done many times. Code
+                    accumulates in one repo that's sort of related (or in the
+                    "core" repository, an antipattern) and then later needs to
+                    be shared with another project. A new project is then
+                    created and the files are copied into it. Unfortunately,
+                    the history does not travel with them. At the time the
+                    question was posed to me, I did not have a good answer.
+                    Later that night as I showered, however, I came up with a
+                    halfway solution that at least allows history to be
+                    preserved when moving code into a brand new repo:
+                </p>
 
-            <a class="post" href="/2016/07/16/subresource-integrity.html">
-                <h1>Subresource Integrity</h1>
-                <h3>16 July 2016</h3>
+<pre>cp -ipr oldrepo newrepo
+cd newrepo
+delete-the-unwanted-files</pre>
 
                 <p>
-                    Subresource Integrity (SRI for short) is a technique that
-                    allows you to ensure that your assets are being served
-                    unaltered.
+                    Simply copy the old repo to a new repo and delete the
+                    unwanted files. Using mercurial, you would issue:
                 </p>
-            </a>
 
-            <a class="post" href="/2016/07/11/jimmy.html">
-                <h1>Jimmy</h1>
-                <h3>11 July 2016</h3>
+<pre>hg mv oldrepo newrepo
+hg rm -f newrepo/herp.py</pre>
 
                 <p>
-                    Jimmy is a bit of the cultural genome of Truveris.
+                
+                    Along with some additional moving and renaming (and
+                    probably the use of <code>sed</code> or
+                    <code>perl -p -i -e</code>) you will have the entire
+                    history of the remaining files.
                 </p>
-            </a>
-
-            <a class="post" href="/2016/07/01/logging.html">
-                <h1>Logging</h1>
-                <h3>01 July 2016</h3>
 
                 <p>
-                    🎶They roll down stairs and travel in pairs and over your devops dog🎶
+                    Of course, you also end up with the history of all the
+                    other files that were in the repo as well. For larger,
+                    older repos and those with large files, this may represent
+                    an undesirable overhead. It's not perfect for all
+                    situations but can be useful in a pinch.
                 </p>
-            </a>
 
-            <a class="post" href="/2016/06/20/my-tests-are-slow.html">
-                <h1>My Tests Are Slow</h1>
-                <h3>20 June 2016</h3>
-
-                <p>
-                    The other day a coworker was remarking that their test suite
-                    ran much more slowly than mine. Much more slowly than the build server, too.
-                </p>
-            </a>
-
-            <a class="post" href="/2016/06/13/break-on-attribute-change.html">
-                <h1>Break On Attribute Change</h1>
-                <h3>13 June 2016</h3>
-
-                <p>
-                    Today I discovered a neat feature available in both Firefox and Chrome: break
-                    on attribute change. This allows us to break when some code changes a DOM element attribute.
-                </p>
-            </a>
+            </div>
         </div>
 
         <script>
