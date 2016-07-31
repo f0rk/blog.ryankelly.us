@@ -85,6 +85,10 @@
             a:hover {
                 text-decoration: underline;
             }
+
+            .small {
+                font-size: 10px;
+            }
         </style>
     </head>
     <body>
@@ -93,64 +97,55 @@
                 <h1><a href="/">blog?</a></h1>
             </header>
 
-            <a class="post" href="/2016/07/30/vim-backupcopy-webpack-dev-server.html">
+            <div class="post">
                 <h1><code>vim</code>, <code>backupcopy</code> and webpack dev server</h1>
                 <h3>30 July 2016</h3>
 
                 <p>
                     This is just a quick note about what seems to be a common
                     gotcha when using vim to develop with webpack's dev server.
+                    If you have ever been frustrated by it seemingly ignoring
+                    your changes, intermittently reloading, or other similar
+                    behavior where it seems like your edits are not being
+                    noticed by the dev server, you need to set vim's
+                    <code>backupcopy</code> option:
                 </p>
-            </a>
 
-            <a class="post" href="/2016/07/16/subresource-integrity.html">
-                <h1>Subresource Integrity</h1>
-                <h3>16 July 2016</h3>
+<pre>set backupcopy=yes</pre>
 
                 <p>
-                    Subresource Integrity (SRI for short) is a technique that
-                    allows you to ensure that your assets are being served
-                    unaltered.
+                    Doing this in your <code>~/.vimrc</code> should be
+                    sufficient and should also not cause any performance issues
+                    on a machine with reasonably fast disks. If your machine
+                    isn't that fast or you regularly edit large files, you may
+                    want to wrap this option in an autocommand specific to js
+                    files:
                 </p>
-            </a>
 
-            <a class="post" href="/2016/07/11/jimmy.html">
-                <h1>Jimmy</h1>
-                <h3>11 July 2016</h3>
+<pre>au BufNewFile,BufReadPre *.js set backupcopy=yes</pre>
 
                 <p>
-                    Jimmy is a bit of the cultural genome of Truveris.
+                    The <code>backupcopy</code> option controls how new files
+                    are written. The three options are making a copy and
+                    overwriting the file (<code>backupcopy=yes</code>),
+                    renaming the file and writing a new one
+                    (<code>backupcopy=no</code>), and automatically selecting a
+                    one of the preceding two (<code>backupcopy=auto</code>, the
+                    default). More information can be found in the vim
+                    documentation:
+                    <a href="http://vimdoc.sourceforge.net/htmldoc/options.html#%27backupcopy%27">http://vimdoc.sourceforge.net/htmldoc/options.html#'backupcopy'</a>.
                 </p>
-            </a>
-
-            <a class="post" href="/2016/07/01/logging.html">
-                <h1>Logging</h1>
-                <h3>01 July 2016</h3>
 
                 <p>
-                    🎶They roll down stairs and travel in pairs and over your devops dog🎶
+                    Here's the source discussion where I discovered this:
+                    <a href="https://github.com/webpack/webpack/issues/781">https://github.com/webpack/webpack/issues/781</a>
                 </p>
-            </a>
-
-            <a class="post" href="/2016/06/20/my-tests-are-slow.html">
-                <h1>My Tests Are Slow</h1>
-                <h3>20 June 2016</h3>
 
                 <p>
-                    The other day a coworker was remarking that their test suite
-                    ran much more slowly than mine. Much more slowly than the build server, too.
+                    It also seems to be included in the main docs now as well:
+                    <a href="https://webpack.github.io/docs/webpack-dev-server.html">https://webpack.github.io/docs/webpack-dev-server.html</a>
                 </p>
-            </a>
-
-            <a class="post" href="/2016/06/13/break-on-attribute-change.html">
-                <h1>Break On Attribute Change</h1>
-                <h3>13 June 2016</h3>
-
-                <p>
-                    Today I discovered a neat feature available in both Firefox and Chrome: break
-                    on attribute change. This allows us to break when some code changes a DOM element attribute.
-                </p>
-            </a>
+            </div>
         </div>
 
         <script>
