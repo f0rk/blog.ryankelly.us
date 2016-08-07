@@ -37,67 +37,414 @@
 
                 <h2>A brief digression on computing</h2>
 
-                mainframes, minicomputers, rack servers, blade servers, virtualized servers, cloud servers, containers, serverless.
+                <p>
+                    In the beginning, there was... well. It's a little
+                    complicated. At the very beginning, we had mechanical
+                    computers. Then along came ENIAC. Things really don't start
+                    to get "mass production", however, until the advent of
+                    mainframes.
+                </p>
+
+                <ul>
+                    <li>1950s - Mainframes</li>
+                    <li>1960s - Minicomputers</li>
+                    <li>1994 - Rack servers</li>
+                    <li>2001 - Blade servers</li>
+                    <li>2000s - Virtual servers</li>
+                    <li>2006 - Cloud servers</li>
+                    <li>2013 - Containers</li>
+                    <li>2014 - Serverless</li>
+                </ul>
+
+                <p class="small">
+                    These are rough release/popularity dates. Argue amongst
+                    yourselves about the timeline.
+                </p>
+
+                <p>
+                    The progression here seems to be a trend toward executing
+                    smaller and smaller units of functionality. Each step down
+                    generally represents a decrease in the operational overhead
+                    and an increase in the operational flexibility.
+                </p>
 
                 <h2>The possibilities</h2>
 
-                no billing when there is no execution
+                <p>
+                    Yay! Serverless! But. What advantages do we gain by going
+                    serverless? And what challenges do we face?
+                </p>
 
-                no servers to maintain or secure
+                <p>
+                    <b>No billing when there is no execution.</b> In my mind,
+                    this is a huge selling point. When no one is using your
+                    site or your API, you aren't paying for. No ongoing
+                    infrastructure costs.  Pay only for what you need. In some
+                    ways, this is the fulfillment of the cloud computing
+                    promise "pay only for what you use".
+                </p>
 
-                forced microservices architecture
+                <p>
+                    <b>No servers to maintain or secure.</b> Server maintenance
+                    and security is handled by your vendor (you could, of
+                    course, host serverless yourself, but in some ways this
+                    seems like a step in the wrong direction). Since your
+                    execution times are also limited, the patching of security
+                    issues is also simplified since there is nothing to
+                    restart. This should all be handled seamlessly by your
+                    vendor.
+                <p>
+
+                <p>
+                    <b>Unlimited scalability.</b> This is another big one.
+                    Let's say you write the next Pokémon Go. Instead of your
+                    site being down every couple of days, serverless lets you
+                    just keep growing and growing. A double-edged sword, for
+                    sure (with great scalability comes great... bills), but if
+                    your service's profitability depends on being up, then
+                    serverless can help enable that.
+                </p>
+
+                <p>
+                    <b>Forced microservices architecture.</b> This one really
+                    goes both ways. Microservices seem to be a good way to
+                    build flexible, scalable, and fault-tolerant architectures.
+                    On the other hand, if your business' services aren't
+                    designed this way, you're going to have difficulty adding
+                    serverless into your existing architecture.
+                </p>
 
                 <h2>But now your stuck on <i>their</i> platform</h2>
 
-                limited range of environments
+                <p>
+                    <b>Limited range of environments.</b> You get what the
+                    vendor gives. You want to go serverless in Rust? You're
+                    probably out of luck.
+                </p>
 
-                limited preinstalled packages
+                <p>
+                    <b>Limited preinstalled packages.</b> You get what the
+                    vendor pre-installs. But you may be able to supply your
+                    own.
+                </p>
 
-                limited execution time
+                <p>
+                    <b>Limited execution time.</b> Your function can only run
+                    for so long. If you have to process a 1TB file you will
+                    likely need to 1) use a work around or 2) use something
+                    else.
+                </p>
 
-                forced microservices architecture
+                <p>
+                    <b>Forced microservices architecture.</b> See above.
+                </p>
 
-                limited insight and ability to instrument
+                <p>
+                    <b>Limited insight and ability to instrument.</b> Just what
+                    <b>is</b> your code doing? With serverless, it is basically
+                    impossible to drop in a debugger and ride along. You still
+                    have the ability to log and emit metrics the usual way but
+                    these generally can only take you so far. Some of the most
+                    difficult problems may be out of reach when the occur in a
+                    serverless environment.
+                </p>
 
                 <h2>The playing field</h2>
 
-                aws lambda
+                <p>
+                    Since the introduction of AWS Lambda in 2014, the number of
+                    offerings has expanded quite a bit. Here are a few popular
+                    ones:
+                </p>
 
-                openwhisk
+                <ul>
+                    <li>AWS Lambda - The Original</li>
+                    <li>OpenWhisk - Available on IBM's Bluemix cloud</li>
+                    <li>Google Cloud Functions</li>
+                    <li>Azure Functions</li>
+                </ul>
 
-                google cloud functions
-
-                azure functions
+                <p>
+                    While all of these have their relative strengths and
+                    weaknesses (like, C# support on Azure or tight integration
+                    on any vendor's platform) the biggest player here is AWS.
+                </p>
 
                 <h2>Building your first API with AWS Lambda and API Gateway</h2>
 
-                the structure of things
+                <p>
+                    Let's give serverless a whirl, shall we? We'll be using AWS
+                    Lambda and API Gateway offerings to build an API that
+                    returns "Guru Meditations" as spoken by <a href="/2016/07/11/jimmy.html">Jimmy</a>.
+                </p>
 
-                api
+                <p>
+                    All of the code is available on GitHub:
+                    <a href="https://github.com/f0rk/meditations" target="_blank">https://github.com/f0rk/meditations</a>.
+                </p>
 
-                execution role
+                <p>
+                    API Documentation:
+                </p>
 
-                deployments
+<pre>GET /
+{
+    "status": "success",
+    "meditation": "did u mention banana cognac shower"
+}</pre>
+
+                <h2>How we'll structure things</h2>
+
+                <p>
+                    The layout:
+                </p>
+
+<pre>.
+├── LICENSE
+├── README.md
+├── server
+│   ├── __init__.py
+│   ├── meditate.py
+│   └── swagger.json
+├── setup.py
+├── tests
+│   └── test_server
+│       └── test_meditate.py
+└── tools
+    ├── deploy.py
+    ├── serve.py
+    ├── serve.sh
+    ├── setup.sh
+    └── zip.sh</pre>
+
+                <p>
+                    Things in AWS (for a more detailed view as to what is
+                    happening here, consult the source of
+                    <code>tools/deploy.py</code>):
+                </p>
+
+                <ul>
+                    <li>
+                        <b>API.</b> The thing that were actually building. It
+                        is represented as a separate object in AWS.
+                    </li>
+
+                    <li>
+                        <b>Execution Role.</b> Every function executes as a
+                        particular role in AWS. Ours will be meditations.
+                    </li>
+
+                    <li>
+                        <b>Role Policy.</b> Every function executes as a role,
+                        and every role needs permission to do things. Our
+                        lambda function doesn't do much, so we'll just add some
+                        logging permissions.
+                    </li>
+
+                    <li>
+                        <b>Lambda Function.</b> The thing that runs our code.
+                    </li>
+
+                    <li>
+                        <b>Swagger.</b> Swagger is a specification of an API.
+                        API Gateway supports consuming a swagger definition to
+                        configure most resources for that API.
+                    </li>
+
+                    <li>
+                        <b>Deployments.</b> API Gateway provides for the
+                        notion of deployments. We won't be using more than one
+                        of these for our API here (i.e., everything is
+                        production, yolo, etc.), but know that they exist and
+                        for a real production-ready service you will probably
+                        want to use development and staging environments.
+                    </li>
+
+                    <li>
+                        <b>Monitoring.</b> In case our service crashes (or
+                        begins to accumulate a hefty bill from usage) we'll
+                        want to add some monitoring in the form of cloudwatch
+                        alarms for errors and billing. Note that you should
+                        modify <code>tools/deploy.py</code> to set your email
+                        correctly.
+                    </li>
+                </ul>
 
                 <h2>the codes</h2>
 
-                returns guru meditations at random
+                <p>
+                    The lambda function itself will be returning guru
+                    meditations at random from a hardcoded list and is very
+                    simple:
+                </p>
+
+<pre>import logging
+import random
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+
+def handler(event, context):
+
+    logger.info(u"received request with id '{}'".format(context.aws_request_id))
+
+    meditations = [
+	"off to a regex/",
+	"the count of machines abides",
+	"you wouldn't fax a bat",
+	"HAZARDOUS CHEMICALS + RKELLY",
+	"your solution requires a blood eagle",
+	"testing is broken because I'm lazy",
+	"did u mention banana cognac shower",
+    ]
+
+    meditation = random.choice(meditations)
+
+    return {
+        "status": "success",
+        "meditation": meditation,
+    }</pre>
 
                 <h2>The <code>deploy.py</code> script</h2>
 
-                <h2>🎶 I think I got my swagger back🎶</h2>
-
-                <h2>Sweet Baby Boto</h2>
-
-                <h2>Zip Ball</h2>
+                <p>
+                    This one is rather long (sadly) and I won't be including it
+                    here. It basically goes through each of the items under
+                    "Things in AWS" and ensures each item exists.
+                </p>
 
                 <h2>Let's deploy this shit</h2>
 
-                <h2>Monitoring</h2>
+                <p>
+                    Just run <code>./tools/deploy.py</code>.
+                </p>
+
+                <p>
+                    Well. Almost. There seems to be some issue applying
+                    privileges that I can't seem to figure out. Your lambda
+                    function will fail to execute because API Gateway does not
+                    have permissions to execute your function. I am not sure
+                    how to add these using botocore. You can work around this
+                    issue by going to the AWS console (sadness), locating your
+                    API, going to the <code>/ POST</code> endpoint, going to
+                    integration request, clicking the pencil icon next to
+                    "Lambda Function" to edit it, and then saving it. You'll
+                    get a popup stating "You are about to give API Gateway
+                    permission to invoke your Lambda function". Click "OK".
+                </p>
+
+
+                <p>
+                    When you're finished with that, take the URL that
+                    <code>./tools/deploy.py</code> printed and call it like so
+                    to see your new API in action:
+                </p>
+
+<pre>$ curl -X POST https://a1b2c3d4.execute-api.us-east-1.amazonaws.com/prod/
+{"status": "success", "meditation": "the count of machines abides"}</pre>
+
+                <h2>Running Locally</h2>
+
+                <p>
+                    One unfortunate thing about AWS Lambda is that there isn't
+                    really a good way to run your code locally. In our case, we
+                    will use a simple flask server to host the appropriate
+                    endpoint locally and handle calling our handler function:
+                </p>
+
+<pre>from __future__ import absolute_import
+
+from flask import Flask, jsonify
+
+from server.meditate import handler
+
+
+app = Flask(__name__)
+
+@app.route("/", methods=["POST"])
+def index():
+
+    class FakeContext(object):
+        aws_request_id = "XXX"
+
+    return jsonify(**handler(None, FakeContext()))
+
+app.run(host="0.0.0.0")</pre>
+
+                <p>
+                    You can run this in the repo with
+                    <code>./tools/serve.sh</code>. Invoke like:
+                </p>
+
+<pre>$ curl -X POST http://localhost:5000/
+{
+    "meditation": "your solution requires a blood eagle",
+    "status": "success"
+}</pre>
+
+                <h2>Testing</h2>
+
+                <p>
+                    You should always test your code. The way we'll be doing
+                    this is importing and running our handler function. This is
+                    really just plain vanilla python testing:
+                </p>
+
+<pre>from __future__ import absolute_import
+
+import unittest
+
+from server.meditate import handler
+
+
+class SubmitTestCase(unittest.TestCase):
+
+    def test_submit(self):
+
+        class FakeContext(object):
+
+            aws_request_id = "XXX"
+
+        response = handler(None, FakeContext())
+
+        self.assertEquals(response["status"], "success")
+        self.assertTrue("meditation" in response)</pre>
+
+                <p>
+                    You can run the tests in the repo with <code>nose2</code>.
+                </p>
 
                 <h2>Other possibilities</h2>
 
-                seamless integration with aws services
+                <p>
+                    <b>Seamless integration with AWS services.</b> Using boto,
+                    you can pretty simply connect to any of AWS other services.
+                    You simply allow your execution role access to these
+                    services using IAM and you're on your way. You can get/put
+                    files from S3, connect to Dynamo DB, invoke other lambda
+                    functions, etc. etc. The list goes on.
+                </p>
+
+                <p>
+                    <b>Accessing a database.</b> You can easily access remote
+                    databases as well. Connect to the database at the top of
+                    your lambda handler's module. Execute queries on the
+                    connection from within the handler function itself. You
+                    will (very likely) have to upload the associated package
+                    contents from where it is installed locally for this to
+                    work. You may also need to statically compile certain
+                    libraries.
+                </p>
+
+                <p>
+                    <b>Calling other webservices.</b> API Gateway is also a way
+                    to translate the output from one web service into a
+                    different form. You can take advantage of this to proxy
+                    calls through to a different webservice or provide
+                    backwards compatabilit when a service changes.
+                </p>
 
             </div>
         </div>
@@ -105,7 +452,7 @@
         <footer>
             <p>
                 &copy; 2016 Ryan Kelly.
-                <a href="https://github.com/f0rk/blog.ryankelly.us/" target="_blank">Github</a>.
+                <a href="https://github.com/f0rk/blog.ryankelly.us/" target="_blank">GitHub</a>.
                 <a href="https://www.linkedin.com/in/rpkelly" target="_blank">LinkedIn</a>.
             </p>
         </footer>
