@@ -1,0 +1,80 @@
+body, html {
+    font-family: "Open Sans", Arial, sans-serif;
+    font-size: 16px;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    min-width: 400;
+}
+
+@media only screen and (max-width: 480px) {
+    body, html {
+        font-size: 12px;
+    }
+}
+
+code {
+    font-family: monospace;
+}
+
+pre {
+    overflow: auto;
+    word-wrap: normal;
+    white-space: pre;
+}
+
+div.container {
+    width: 60%;
+    margin: 0px auto;
+}
+
+div.container p {
+    text-align: justify;
+}
+
+@media only screen and (max-width: 768px) {
+    div.container {
+        width: 90%;
+        margin: 0 auto;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    div.container {
+        width: 99%;
+        margin: 0 auto;
+    }
+}
+
+header > h1 {
+    font-size: 50px;
+}
+
+@media only screen and (max-width: 480px) {
+    h1 {
+        font-size: 20px;
+    }
+
+    header > h1 {
+        font-size: 30px;
+    }
+}
+
+a {
+    color: #333;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.small {
+    font-size: 10px;
+}
+
+footer {
+    font-size: 10px;
+    text-align: center;
+    margin-top: 20px;
+}

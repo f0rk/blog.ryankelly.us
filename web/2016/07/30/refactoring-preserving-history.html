@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="keywords" content="">
+
+        <title>blog</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href="/css/main.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1><a href="/">blog?</a></h1>
+            </header>
+
+            <div class="post">
+                <h1>Refactoring, Preserving History</h1>
+                <h3>30 July 2016</h3>
+
+                <p>
+                    At work and in many open source projects there is a common
+                    pattern of how to manage your code: everything in separate
+                    projects. While this keeps everything separate it does
+                    introduce some other challenges:
+                </p>
+
+                <ul>
+                    <li>
+                        Branches or tags (depending on your workflow) must be
+                        created in every repository for every release if you
+                        are using versioned releases.
+                    </li>
+
+                    <li>
+                        Certain code elements may be repeated in each repo (for
+                        example, <code>setup.py</code> or the repository's
+                        <code>__init__.py</code> file).
+                    </li>
+
+                    <li>
+                        Certain configuration files may need to be repeated
+                        (for example, <code>.coveragerc</code>).
+                    </li>
+
+                    <li>
+                        Organization patterns for files and naming conventions
+                        may begin to vary between repos.
+                    </li>
+
+                    <li>
+                        Moving code between repos or out of a repo destroys the
+                        history of the moved files.
+                    </li>
+                </ul>
+
+                <p>
+                    We'll be touching on this last item.
+                </p>
+
+                <p>
+                    A colleague asked me the other day how to preserve the
+                    history of some files as they were migrated into another
+                    repo. This is something we've done many times. Code
+                    accumulates in one repo that's sort of related (or in the
+                    "core" repository, an antipattern) and then later needs to
+                    be shared with another project. A new project is then
+                    created and the files are copied into it. Unfortunately,
+                    the history does not travel with them. At the time the
+                    question was posed to me, I did not have a good answer.
+                    Later that night as I showered, however, I came up with a
+                    halfway solution that at least allows history to be
+                    preserved when moving code into a brand new repo:
+                </p>
+
+<pre>cp -ipr oldrepo newrepo
+cd newrepo
+delete-the-unwanted-files</pre>
+
+                <p>
+                    Simply copy the old repo to a new repo and delete the
+                    unwanted files. Using mercurial, you would issue:
+                </p>
+
+<pre>hg mv oldrepo newrepo
+hg rm -f newrepo/herp.py</pre>
+
+                <p>
+
+                    Along with some additional moving and renaming (and
+                    probably the use of <code>sed</code> or
+                    <code>perl -p -i -e</code>) you will have the entire
+                    history of the remaining files.
+                </p>
+
+                <p>
+                    Of course, you also end up with the history of all the
+                    other files that were in the repo as well. For larger,
+                    older repos and those with large files, this may represent
+                    an undesirable overhead. It's not perfect for all
+                    situations but can be useful in a pinch.
+                </p>
+
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                &copy; 2016 Ryan Kelly.
+                <a href="https://github.com/f0rk/blog.ryankelly.us/" target="_blank">Github</a>.
+                <a href="https://www.linkedin.com/in/rpkelly" target="_blank">LinkedIn</a>.
+            </p>
+        </footer>
+
+        <script>
+            (function(i,s,o,g,r,a,m){i["GoogleAnalyticsObject"]=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,"script","https://www.google-analytics.com/analytics.js","ga");
+
+            ga("create", "UA-80585364-1", "auto");
+            ga("send", "pageview");
+        </script>
+    </body>
+</html>
