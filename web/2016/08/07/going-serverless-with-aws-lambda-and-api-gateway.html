@@ -337,11 +337,13 @@ def handler(event, context):
                     Well. Almost. There seems to be some issue applying
                     privileges that I can't seem to figure out. Your lambda
                     function will fail to execute because API Gateway does not
-                    have permissions to execute your function. I am not sure
-                    how to add these using botocore. You can work around this
-                    issue by going to the AWS console (sadness), locating your
-                    API, going to the <code>/ POST</code> endpoint, going to
-                    integration request, clicking the pencil icon next to
+                    have permissions to execute your function. The specific
+                    error should be "Execution failed due to configuration
+                    error: Invalid permissions on Lambda function". I am not
+                    sure how to add these using botocore. You can work around
+                    this issue by going to the AWS console (sadness), locating
+                    your API, going to the <code>/ POST</code> endpoint, going
+                    to integration request, clicking the pencil icon next to
                     "Lambda Function" to edit it, and then saving it. You'll
                     get a popup stating "You are about to give API Gateway
                     permission to invoke your Lambda function". Click "OK".
