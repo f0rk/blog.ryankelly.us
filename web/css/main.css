@@ -65,6 +65,11 @@ img {
     }
 }
 
+img.small {
+    max-width: 200px;
+    margin: 0 auto;
+}
+
 header > h1 {
     font-size: 50px;
 }

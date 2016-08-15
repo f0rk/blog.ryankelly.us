@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="A review and other thoughts on Andreas M. Antonopoulos' 'Mastering Bitcoin'">
+        <meta name="keywords" content="bitcoin book review">
+
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:site" content="@rpkelly22">
+        <meta name="twitter:title" content="Book Review: Mastering Bitcoin">
+        <meta name="twitter:description" content="A review and other thoughts on Andreas M. Antonopoulos' 'Mastering Bitcoin'">
+        <meta name="twitter:image" content="http://blog.ryankelly.us/2016/08/14/cover.png">
+        <meta name="twitter:image:alt" content="cover of Mastering Bitcoin">
+
+        <meta property="og:title" content="Book Review: Mastering Bitcoin" />
+        <meta property="og:description" content="A review and other thoughts on Andreas M. Antonopoulos' 'Mastering Bitcoin'" />
+        <meta property="og:url" content="http://blog.ryankelly.us/2016/08/14/book-review-mastering-bitcoin.html" />
+        <meta property="og:image" content="http://blog.ryankelly.us/2016/08/14/cover.png" />
+
+        <title>blog</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href="/css/main.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1><a href="/">blog?</a></h1>
+            </header>
+
+            <div class="post">
+                <h1>Book Review: Mastering Bitcoin</h1>
+                <h3>14 August 2016</h3>
+
+                <p>
+                    "Mastering Bitcoin" by Andreas M. Antonopoulos is an
+                    in-depth discussion of how bitcoin works at a technical
+                    level. It goes to great lengths to describe the theory,
+                    algorithms, code, and concerns behind the implementation of
+                    Bitcoin. While somewhat dated now, this book is a great
+                    resource for anyone wishing to understand this
+                    transformative technology better.
+                </p>
+
+                <a href="http://amzn.to/2aSPC7h" title="link to 'Mastering Bitcoin' on Amazon" target="_blank">
+                    <img class="small" src="cover.png" alt="cover image of 'Mastering Bitcoin'" />
+                </a>
+
+                <h3>Overview</h3>
+
+                <p>
+                    The book begins by envisioning a few characters, each with
+                    their own interaction with Bitcoin ecosystem. In the
+                    earlier chapters, these characters make a number of
+                    appearances. It seems this thematic approach weakens later
+                    in the text. While unfortunate, I don't think the quality
+                    of the information contained in the book suffers.
+                </p>
+
+                <p>
+                    The book then proceeds to helping you jump right in to the
+                    Bitcoin ecosystem with a discussion of how to get your
+                    hands on some Bitcoin. The next chapter goes over how to
+                    spend your newly obtained Bitcoin and gives an overview of
+                    how transactions work, the role of mining, and how
+                    transactions are mined into blocks.
+                </p>
+
+                <p>
+                    Coverage of the Bitcoin client and its usage follows.
+                    Wallet management and chain querying are covered heavily.
+                    Creating transactions at the lowest level (including
+                    signing and submitting them) is also covered. This chapter
+                    is rounded out by a discussion of (then current)
+                    alternative Bitcoin clients and client libraries.
+                </p>
+
+                <p>
+                    Keys and wallets are then covered in-depth. Understanding
+                    how to interact with these two items (and how they interact
+                    with the Bitcoin ecosystem as a whole) is an important
+                    subject. Andreas does a good job explaining the
+                    cryptography behind keys as well.
+                </p>
+
+                <p>
+                    Transactions are then given consideration. This includes
+                    the goriest and nitty grittiest details of how transactions
+                    are structured and what each component means. The Bitcoin
+                    scripting language is given treatment here as well.
+                </p>
+
+                <p>
+                    Chapter 6 introduces the Bitcoin network and the types of
+                    nodes that operate within it. It also explains how a phone
+                    application (or other resource constrained application) can
+                    verify payments without necessarily needing the entire
+                    blockchain.
+                </p>
+
+                <p>
+                    A detailed discussion of the structure of Bitcoin's
+                    blockchain follows. A blockchain, generally speaking, is a
+                    series of blocks where the header of each block contains a
+                    pointer to the previous block as well as secure
+                    representation of each block's data. Bitcoin's blockchain
+                    uses Merkle trees (a type of tree where each node contains
+                    the combined hash of the children's hashes) and
+                    proof-of-work based consensus to ensure security. This
+                    chapter is a must read for anyone wishing to better
+                    understand what a blockchain is.
+                </p>
+
+                <p>
+                    The most important innovation the Bitcoin brings is covered
+                    in chapter 8: consensus. Bitcoin was not the first
+                    cryptocurrency. But it was the first successful one. And
+                    this chapter helps us understand why: consensus. Prior to
+                    Bitcoin, there was no good way to avoid the "double spend"
+                    problem. That is, how do you prevent a malicious individual
+                    from trying to spend the same amount twice? Consensus, of
+                    course, will prevent this. However, getting a network of
+                    nodes (including malicious nodes) to agree wasn't solved
+                    until Bitcoin introduced mining and proof-of-work. In
+                    essence, the Bitcoin network votes on the validity of
+                    transactions by voting with processing power. As long as
+                    the network is majority "good" nodes, their combined
+                    computing power will outvote malicious nodes. On top of
+                    that, the amount of computational power that must be
+                    expended to undo the entire chain (or even make
+                    modifications a few blocks deep) is so enormous that
+                    transactions are essentially immutable after a relatively
+                    short amount of time. Chapter 8 covers all of this
+                    in-depth. To understand this chapter is to understand why
+                    Bitcoin was revolutionary. Bitcoin popularized the
+                    blockchain but proof-of-work based consensus is really what
+                    popularized Bitcoin.
+                </p>
+
+                <p>
+                    Alternatives to and descendants of Bitcoin are discussed in
+                    chapter 9. A number of technologies and ecoystems that (at
+                    the time) we important either in terms of their market
+                    value or ideas are covered. This chapter is by no means
+                    exhaustive.
+                </p>
+
+                <p>
+                    The book concludes with a discussion on security best
+                    practices for Bitcoin. Since Bitcoin exists digitally,
+                    theft can occur almost instanteously. And since it is
+                    cryptographically secured, loss of private keys result in
+                    an irretrievable loss of any associated coins.
+                </p>
+
+                <h3>What Worked</h3>
+
+                <p>
+                    In my mind there are two really great things about this
+                    book: Good coverage of key topics and approachable
+                    cryptography.
+                </p>
+
+                <p>
+                    <b>Good coverage of key topics</b>. All of the important
+                    aspects of Bitcoin are covered. Everything you need to know
+                    from a technical standpoint about how to interact with the
+                    Bitcoin ecosystem is covered.
+                </p>
+
+                <p>
+                    <b>Approachable cryptography</b>. Few times have I read a
+                    discussion and felt like I knew what was going on. Kudos to
+                    Andreas for making what is usually a very dense subject an
+                    enjoyable read.
+                </p>
+
+                <h3>What Didn't</h3>
+
+                <p>
+                    There are a handful of things I didn't enjoy about this
+                    book, though they are fairly minor:
+                </p>
+
+                <p>
+                    <b>Alice and Bob</b>. Let's just say Alice and Bob retire
+                    and there are no more secrets between them. I feel like
+                    these characters are overplayed. I also personally don't
+                    like the use of characters like this to explain concepts.
+                    For whatever reason, I think they make understanding the
+                    content <b>more</b> difficult and not less.
+                </p>
+
+                <p>
+                    <b>Tinfoil hat</b>. Bitcoin has gotten a bad rap and drawn
+                    suspicion from business leaders and the government since it
+                    helps provide secrecy and can potentially serve to assist
+                    in criminal efforts. The author in several cases touts this
+                    secrecy as seemingly the one true way. For broader adoption
+                    a focus on business cases and how Bitcoin can fit into the
+                    existing legal and social frameworks we operate under will
+                    be necessary. While privacy is important and reducing the
+                    number of trusted entities in a transaction is an important
+                    step forward, we can't just throw out our existing systems.
+                    So suggesting you buy your first Bitcoin by paying a friend
+                    cash is a little... off-putting for readers more focused on
+                    business applications.
+                </p>
+
+                <p>
+                    <b>Limited discussion of other technologies</b>. Yes, the
+                    book is titled "Mastering Bitcoin". I still would've
+                    enjoyed more information on the technologies that compete
+                    with Bitcoin's choices. Proof-of-work is not the only way.
+                    Bitcoin's specific type of proof-of-work isn't the only
+                    way. These sorts of things would've added an additional
+                    richness.
+                </p>
+
+                <h3>Would I recommend this book?</h3>
+
+                <p>
+                    <b>Yes</b>. Buy the book here on Amazon:
+                    <a href="http://amzn.to/2aSPC7h">http://amzn.to/2aSPC7h</a>
+                </p>
+
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                &copy; 2016 Ryan Kelly.
+                <a href="https://github.com/f0rk/blog.ryankelly.us/" target="_blank">GitHub</a>.
+                <a href="https://www.linkedin.com/in/rpkelly" target="_blank">LinkedIn</a>.
+            </p>
+        </footer>
+
+        <script>
+            (function(i,s,o,g,r,a,m){i["GoogleAnalyticsObject"]=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,"script","https://www.google-analytics.com/analytics.js","ga");
+
+            ga("create", "UA-80585364-1", "auto");
+            ga("send", "pageview");
+        </script>
+    </body>
+</html>
