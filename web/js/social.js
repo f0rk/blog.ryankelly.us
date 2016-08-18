@@ -39,6 +39,7 @@ function twitter(elem) {
     params.push("tw_p=" + encodeURIComponent("tweetbutton"));
     params.push("url=" + encodeURIComponent(getUrl()));
     params.push("text=" + encodeURIComponent(tweetText));
+    params.push("via=" + encodeURIComponent("rpkelly22"));
 
     var url = base + params.join("&");
 
