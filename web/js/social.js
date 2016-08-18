@@ -48,9 +48,9 @@ function twitter(elem) {
 
 function socialize() {
 
-    var twitterButton = document.getElementById("twitter-button");
-    if (twitterButton !== null) {
-        twitter(twitterButton);
+    var twitterButtons = document.getElementsByClassName("twitter-button");
+    for (var i = 0; i < twitterButtons.length; ++i) {
+        twitter(twitterButtons[i]);
     }
 
 }
