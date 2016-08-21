@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="Arrays are an underutilized, powerful feature provided by Postgres">
+        <meta name="keywords" content="postgres postgresql sql array">
+
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:site" content="@rpkelly22">
+        <meta name="twitter:title" content="Postgres, the Good Parts: Arrays">
+        <meta name="twitter:description" content="Arrays are an underutilized, powerful feature provided by Postgres">
+        <meta name="twitter:image" content="http://blog.ryankelly.us/img/cards/pg.png">
+        <meta name="twitter:image:alt" content="PostgreSQL logo">
+        <meta name="twitter:tweet" content="Upgrade your #sql skills with arrays">
+
+        <meta property="og:title" content="Postgres, the Good Parts: Arrays" />
+        <meta property="og:description" content="Arrays are an underutilized, powerful feature provided by Postgres" />
+        <meta property="og:url" content="http://blog.ryankelly.us/2016/08/21/postgres-the-good-parts-arrays.html" />
+        <meta property="og:image" content="http://blog.ryankelly.us/img/cards/pg.png" />
+
+        <title>blog</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href="/css/main.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1><a href="/">blog?</a></h1>
+            </header>
+
+            <div class="post">
+                <h1>Postgres, the Good Parts: Arrays</h1>
+                <h3>21 August 2016</h3>
+
+                <div class="social">
+                    <a href="https://twitter.com/share" class="twitter-button" target="_blank"><i class="fa fa-twitter"></i> tweet</a>
+                </div>
+
+                <p>
+                    PostgreSQL, also known as Postgres, is
+                    <a href="https://www.postgresql.org/">"the world's most advanced open source database"</a>.
+                    But what makes it so advanced? In this post, we'll be
+                    covering what may be my favorite feature: arrays.
+                </p>
+
+                <h3>The Basics</h3>
+
+                <p>
+                    Arrays allow you store lists of values in a single column.
+                    SQL, being strongly typed, allows for only heterogeneous
+                    arrays. Any non-array concrete type can be used as the type
+                    of an array. Arrays of <code>text</code>? Of course.
+                    <code>integer</code>? Yup. <code>xml</code>? Uhh... if
+                    you're that crazy.
+                </p>
+
+                <p>
+                    Here's how you create a table with an array column in
+                    postgres:
+                </p>
+
+<pre>(postgres@[local]:5432 13:55:54) [test]&gt; create table array_test (id serial primary key, vals text[]);
+CREATE TABLE
+Time: 42.664 ms
+</pre>
+
+                <small>
+                    we don't need a primary key, but it will help with the
+                    examples.
+                </small>
+
+                <p>
+                    Inserting array values:
+                </p>
+
+<pre>(postgres@[local]:5432 13:57:05) [test]&gt; insert into array_test (vals) values ('{foo, bar, "lol wut"}');
+INSERT 0 1
+Time: 3.938 ms
+</pre>
+
+                <p>
+                    This is the quoted string format. You can also use the
+                    <code>array</code> format:
+                </p>
+
+<pre>(postgres@[local]:5432 13:58:35) [test]&gt; insert into array_test (vals) values (array['que', 'hrm', 'with spaces']);
+INSERT 0 1
+Time: 2.029 ms</pre>
+
+                <p>
+                    And this is what they look like:
+                </p>
+
+<pre> id |          vals
+----+-------------------------
+  1 | {foo,bar,"lol wut"}
+  2 | {que,hrm,"with spaces"}</pre>
+
+                <p>
+                    Updates can set the entire column value using the formats
+                    above. You can also set individual values:
+                </p>
+
+<pre>(postgres@[local]:5432 14:03:47) [test]&gt; begin; update array_test set vals[1] = 'fail' where id = 2;
+BEGIN
+Time: 0.199 ms
+UPDATE 1
+Time: 3.332 ms
+(postgres@[local]:5432 14:04:09) [test]&gt; commit;
+COMMIT
+Time: 3.733 ms
+(postgres@[local]:5432 14:04:38) [test]&gt; select * from array_test where id = 2;
+ id |           vals
+----+--------------------------
+  2 | {fail,hrm,"with spaces"}</pre>
+
+				<p>
+                    Note that arrays in postgres (and SQL) begin with index 1,
+                    not index 0.
+                </p>
+
+				<h3>Uninteresting so far</h3>
+
+				<p>
+                    I agree. But let's play with some of the array functions
+                    that postgres provides.
+                </p>
+
+                <p>
+                    One of the most useful is <code>unnest</code>:
+                </p>
+
+<pre>(postgres@[local]:5432 14:04:46) [test]&gt; select unnest(vals) from array_test;
+   unnest
+-------------
+ foo
+ bar
+ lol wut
+ fail
+ hrm
+ with spaces</pre>
+
+                <p>
+                    With <code>unnest</code>, you can take array values and
+                    make them queryable. You can then perform other operations,
+                    such as <code>group by</code> to get, for instance, counts
+                    of individual items:
+                </p>
+
+<pre>(postgres@[local]:5432 14:16:43) [test]&gt; select val, count(*) from (select unnest(vals) val from array_test) as s group by 1;
+     val     | count
+-------------+-------
+ foo         |     1
+ fail        |     1
+ hrm         |     1
+ with spaces |     1
+ bar         |     1
+ lol wut     |     1</pre>
+
+				<p>
+                    <code>unnest</code> is probably the single most useful
+                    function. The function <code>cardinality</code> is next and
+                    returns the number of elements in the array:
+                </p>
+
+<pre>(postgres@[local]:5432 14:24:55) [test]&gt; select *, cardinality(vals) from array_test;
+ id |           vals           | cardinality
+----+--------------------------+-------------
+  1 | {foo,bar,"lol wut"}      |           3
+  2 | {fail,hrm,"with spaces"} |           3</pre>
+
+				<h3>
+					Operators add some more flavor
+				</h3>
+
+				<p>
+                    Operators can be used for logical tests or array
+                    modifications. For most of my uses of arrays, operators
+                    dominate in their manipulation.
+                </p>
+
+                <p>
+                    The <code>&amp;&amp;</code>, <code>@&gt;</code>, and
+                    <code>&lt;@</code> operators are commonly used logical
+                    operators. These allow you to test for the overlap of two
+                    arrays and the containment of one array by another.
+                </p>
+
+<pre>postgres@[local]:5432 14:24:57) [test]&gt; select * from array_test where vals &amp;&amp; '{fail}';
+ id |           vals
+----+--------------------------
+  2 | {fail,hrm,"with spaces"}
+(1 row)
+
+(postgres@[local]:5432 14:34:00) [test]&gt; select * from array_test where vals @&gt; '{fail,hrm}';
+ id |           vals
+----+--------------------------
+  2 | {fail,hrm,"with spaces"}
+(1 row)
+
+(postgres@[local]:5432 14:34:34) [test]&gt; select * from array_test where vals @&gt; '{fail,hrm,nope}';
+ id | vals
+----+------
+(0 rows)
+
+(postgres@[local]:5432 14:34:40) [test]&gt; select * from array_test where vals &lt;@ '{fail,hrm}';
+ id | vals
+----+------
+(0 rows)
+
+(postgres@[local]:5432 14:35:41) [test]&gt; select * from array_test where vals &gt;@ '{fail,hrm,"with spaces","some other value"}';
+ id |           vals
+----+--------------------------
+  2 | {fail,hrm,"with spaces"}
+(1 row)</pre>
+
+				<p>
+                    The most useful array manipulation operator is
+                    <code>||</code>. This is used to join together arrays or to
+                    append values to arrays:
+                </p>
+
+<pre>(postgres@[local]:5432 14:40:32) [test]&gt; select vals || 'hi'::text from array_test where id = 1;
+        ?column?
+------------------------
+ {foo,bar,"lol wut",hi}
+(1 row)
+
+Time: 1.218 ms
+(postgres@[local]:5432 14:40:45) [test]&gt; select vals || '{hi, bye}' from array_test where id = 1;
+          ?column?
+----------------------------
+ {foo,bar,"lol wut",hi,bye}
+(1 row)</pre>
+
+                <p>
+                    Of course, these operators can be used in
+                    <code>update</code> or <code>delete</code> statements as
+                    well.
+                </p>
+
+                <p>
+                    For a complete list of functions and operators, see
+                    <a href="https://www.postgresql.org/docs/9.5/static/functions-array.html">the documentation</a>.
+                </p>
+
+                <h3><code>array_agg</code></h3>
+
+                <p>
+                    Several functions produce arrays as well. The most
+                    important of these is <code>array_agg</code>. This function
+                    allow you to aggregate values into an array with a query:
+                </p>
+
+<pre>(postgres@[local]:5432 14:45:23) [test]&gt; select array_agg(id) from array_test;
+ array_agg
+-----------
+ {1,2}</pre>
+
+                <p>
+                    Values of any type (as described above) can be aggregated:
+                </p>
+
+<pre>(postgres@[local]:5432 14:45:40) [test]&gt; create table timestamp_test (id serial primary key, val timestamp);
+CREATE TABLE
+Time: 13.396 ms
+(postgres@[local]:5432 14:47:37) [test]&gt; insert into timestamp_test (val) values ('2016-01-01'), ('2015-01-01'), ('1970-01-01');
+INSERT 0 3
+Time: 2.914 ms
+(postgres@[local]:5432 14:48:03) [test]&gt; select array_agg(val) from timestamp_test;
+                              array_agg
+---------------------------------------------------------------------
+ {"2016-01-01 00:00:00","2015-01-01 00:00:00","1970-01-01 00:00:00"}
+(1 row)
+
+Time: 0.385 ms</pre>
+
+                <h3>Applications</h3>
+
+                <p>
+                    But what can I actually use arrays for? There are a handful
+                    that I have experience with:
+                </p>
+
+                <ul>
+                    <li>Lists</li>
+                    <li>Tags</li>
+                    <li>Materialized tree children</li>
+                </ul>
+
+                <p>
+                    <b>Lists</b>. The obvious is lists. Lists of any type can
+                    be captured in this way. Say your product needs to save
+                    some list of user preferences, and you encode those
+                    preferences as strings. User 1 has email preferences of
+                    <code>SPAM</code> and <code>HAM</code>. You can just set
+                    the user's email preferences like:
+                </p>
+
+<pre>(postgres@[local]:5432 14:48:23) [test]&gt; update users set email_preferences = '{SPAM,HAM}' where id = 1;</pre>
+
+                <p>
+                    If you had used a separate table for this, you'd need to
+                    check which values exist first (to prevent integrity
+                    issues) or delete the old values and recreate everything.
+                    For simple lists, using arrays can help simplify your code.
+                </p>
+
+                <p>
+                    <b>Tags</b>. This is how I feel in love with arrays.
+                    User-defined tags can be applied, for example, to displayed
+                    posts. This isn't that powerful until you want to filter to
+                    posts have a certain tag. The old way, with a separate tags
+                    table:
+                </p>
+
+<pre>select
+    *
+from
+    posts a
+where
+    exists (
+        select
+            *
+        from
+            post_tags x
+        where
+            a.id = x.post_id
+            and x.tag = 'foo'
+    )
+;</pre>
+
+				<p>
+                    Which is quite a bit to type and can be tough to get your
+                    ORM to generate. It can also slow down as you get more and
+                    more tags, even with proper indexes.
+                </p>
+
+                <p>
+                    Inline tags?
+                </p>
+
+<pre>select * from posts where tags &amp;&amp; '{foo}'</pre>
+
+                <p>
+                    And you can simply add more tags or specify that multiple
+                    tags must match. <b>As a fabulous bonus, you can create
+                    indexes on arrays in postgres!</b> A query like the above
+                    over hundreds of millions of results is still quite performant.
+                    To create such an index:
+                </p>
+
+<pre>(postgres@[local]:5432 15:07:54) [test]&gt; create index idx_array_test on array_test using gin (vals);
+CREATE INDEX</pre>
+
+                <p>
+                    <code>using</code> specifies <code>gin</code>, which is a
+                    Generalized INverted index. This is a good choice in
+                    general. Specialized uses may benefit from using
+                    <code>gist</code>. You can learn more about these index
+                    types <a href="https://www.postgresql.org/docs/current/static/textsearch-indexes.html">here</a>.
+                </p>
+
+                <p>
+                    <b>Materialized tree children</b>. SQL is not particularly
+                    well-suited for dealing with data in tree form. Querying is
+                    not particularly efficient in terms of query writing or
+                    performance. Arrays can help you here when you have
+                    tree-structured data that is read more often than updated
+                    (which is true of most data, in my experience). You can
+                    store the direct or total set of children on each node and
+                    maintain this using a trigger. You can then quickly find
+                    all children from a node by querying for the ids of the
+                    children contained in that node's children array.
+                </p>
+
+                <h3>But shouldn't you be normalizing?</h3>
+
+                <p>
+                    No. Well. Yes. Er. Maybe? Choosing the right abstraction
+                    for your needs is important. Using an array can be much
+                    simpler. But as soon as you need to encapsulate multiple
+                    values you should probably create a second table.
+                </p>
+
+                <p>
+                    Performance is also a consideration. In the example given
+                    above, tags provided an enormous speed improvement when I
+                    used them at work. But always measure.
+                </p>
+
+                <p>
+                    Lastly, arrays may be easier to use with your programming
+                    language or ORM. While many ORMs also allow you to treat
+                    related tables as lists natively, this may not always be
+                    available.
+                </p>
+
+                <h3>Wishlist</h3>
+
+                <p>
+                    A major barrier to adopting arrays and using them
+                    effectively is foreign keys. In the tree children example
+                    above, failure to maintain the list of children correctly
+                    may result in incorrect results or other errors. Too, if
+                    you want to enforce a specific list of tags (or relate
+                    other information to those tags) it's a completely manual
+                    process.
+                </p>
+
+                <h3>Conclusion</h3>
+
+                <p>
+                    This is the first post in what will be a series about the
+                    many awesome features of Postgres. While not comprehensive I
+                    hope it gives you some ideas about how to use arrays (or
+                    not to use arrays) in your codebase.
+                </p>
+
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                &copy; 2016 Ryan Kelly.
+                <a href="https://github.com/f0rk/blog.ryankelly.us/" target="_blank">GitHub</a>.
+                <a href="https://www.linkedin.com/in/rpkelly" target="_blank">LinkedIn</a>.
+                <a href="https://twitter.com/rpkelly22" target="_blank">Twitter</a>.
+            </p>
+        </footer>
+
+        <script>
+            (function(i,s,o,g,r,a,m){i["GoogleAnalyticsObject"]=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,"script","https://www.google-analytics.com/analytics.js","ga");
+
+            ga("create", "UA-80585364-1", "auto");
+            ga("send", "pageview");
+        </script>
+
+        <script type="text/javascript" src="/js/social.js"></script>
+    </body>
+</html>
