@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="csv2table is a tool designed to easily load csv files into postgresql tables with type detection and more">
+        <meta name="keywords" content="postgres postgresql sql csv etl delimited">
+
+        <meta name="twitter:card" content="photo">
+        <meta name="twitter:site" content="@rpkelly22">
+        <meta name="twitter:title" content="csv2table: csv + #postgresql + type detection = ❤️">
+        <meta name="twitter:description" content="csv2table is a tool designed to easily load csv files into #postgresql tables with type detection and more">
+        <meta name="twitter:image" content="http://blog.ryankelly.us/2016/08/28/card.png">
+        <meta name="twitter:image:alt" content="Screenshot of csv2table in action">
+        <meta name="twitter:url" content="http://blog.ryankelly.us/2016/08/28/csv2table.html">
+        <meta name="twitter:tweet" content="csv2table: csv + #postgresql + type detection = ❤️">
+
+        <meta property="og:title" content="csv2table: csv + #postgresql + type detection = ❤️" />
+        <meta property="og:description" content="csv2table is a tool designed to easily load csv files into #postgresql tables with type detection and more" />
+        <meta property="og:url" content="http://blog.ryankelly.us/2016/08/28/csv2table.html" />
+        <meta property="og:image" content="http://blog.ryankelly.us/2016/08/28/card.png" />
+
+        <title>csv2table | blog?</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href="/css/main.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1><a href="/">blog?</a></h1>
+            </header>
+
+            <div class="post">
+                <h1>csv2table</h1>
+                <h3>28 August 2016</h3>
+
+                <div class="social">
+                    <a href="https://twitter.com/share" class="twitter-button" target="_blank"><i class="fa fa-twitter"></i> tweet</a>
+                </div>
+
+                <p>
+                    <a href="https://github.com/f0rk/csv2table" target="_blank"><code>csv2table</code></a>
+                    is a tool that I wrote. Over the years, I've found myself
+                    constantly interacting with delimited files and constantly
+                    frustrated by the lack of tooling to query such files.
+                    <code>csv2table</code> was born of that frustration.
+                </p>
+
+                <p>
+                    If you spend a lot of time massaging data in CSV or Excel
+                    files or frequently load delimited data into a database
+                    (I'm looking at you, data-science-types) then
+                    <code>csv2table</code> is a tool you should know and love.
+                </p>
+
+                <h3>The Basics</h3>
+
+                <p>
+                    Before we get any further: <code>csv2table</code> is meant
+                    for use with postgres (redshift, as well). It utilizes the
+                    <code>COPY</code> command to perform the real heavy
+                    lifting. If another database implements this command then
+                    <code>csv2table</code> will work just dandy. Otherwise, you
+                    can still use most of <code>csv2table</code>'s
+                    functionality minus the <code>--copy</code>-related bits.
+                </p>
+
+                <p>
+                    My most common use is to create a table and load the data
+                    into it:
+                </p>
+
+<pre>~$ cat /tmp/colors.csv
+Id,Color,Color Name,Description,Hex #,Inventory,Add Date
+1,red,Red,Having the color of blood,#f00,0.25,2014-10-16
+2,green,Green,Having the color of growing grass,#0f0,10.18,2014-08-25
+3,blue,Blue,Having the color of the clear sky,#00f,4.67,2014-09-17
+~$ csv2table --file /tmp/colors.csv --copy
+create table "colors" (
+    "Id" text,
+    "Color" text,
+    "Color Name" text,
+    "Description" text,
+    "Hex #" text,
+    "Inventory" text,
+    "Add Date" text
+);
+copy "colors"("Id", "Color", "Color Name", "Description", "Hex #", "Inventory", "Add Date") from '/tmp/colors.csv' with csv header delimiter ',' quote '"';
+~$ csv2table --file /tmp/colors.csv --copy | pg test
+SET
+SET
+Null display is "&lt;NÜLLZØR&gt;".
+Timing is on.
+CREATE TABLE
+Time: 4.795 ms
+COPY 3
+Time: 1.211 ms
+~$ pg test
+(postgres@[local]:5432 21:19:54) [test]&gt; \d colors
+     Table "public.colors"
+   Column    | Type | Modifiers
+-------------+------+-----------
+ Id          | text |
+ Color       | text |
+ Color Name  | text |
+ Description | text |
+ Hex #       | text |
+ Inventory   | text |
+ Add Date    | text |
+</pre>
+
+				<p>
+                    The above command emitted a <code>CREATE TABLE</code>
+                    statement and a <code>COPY</code> statement and loaded all
+                    the data into a table with same fields and structure as the
+                    supplied CSV. The name of the table was inferred from the
+                    name of the file.
+                </p>
+
+                <p>
+                    Every column was created with the type <code>TEXT</code>.
+                    <code>csv2table</code> can attempt to automatically find
+                    types for your columns. Pass each type you'd like to
+                    detect:
+                </p>
+
+<pre>~$ csv2table --file /tmp/colors.csv --integer --timestamp
+create table "colors" (
+    "Id" integer,
+    "Color" text,
+    "Color Name" text,
+    "Description" text,
+    "Hex #" text,
+    "Inventory" text,
+    "Add Date" timestamp
+);</pre>
+
+				<p>
+                    As you can see, the <code>Id</code> column will be created
+                    as type <code>INTEGER</code> and the <code>Add Date</code>
+                    column will be created with type <code>TIMESTAMP</code>.
+                </p>
+
+                <p>
+                    This is the full list of supported type detections:
+                </p>
+
+                <ul>
+                    <li><code>--integer</code></li>
+                    <li><code>--numeric</code></li>
+                    <li><code>--timestamp</code> (also used with <code>--tz</code> for <code>TIMESTAMPTZ</code>)</li>
+                    <li><code>--date</code></li>
+                    <li><code>--array</code></li>
+                    <li><code>--json</code></li>
+                    <li><code>--jsonb</code></li>
+                </ul>
+
+                <p>
+                    Another flag I almost always use is <code>-1</code> aka
+                    <code>--transaction</code>. This wraps the whole thing in a
+                    transaction so that if your data load fails the table and
+                    any other structures won't be created and leave you in a
+                    half-complete state.
+                </p>
+
+                <h3>d e l i m i t e d</h3>
+
+                <p>
+                    There's a long running joke at work about receiving e
+                    delimited files. We've received files with many different
+                    delimiters as well as files masquerading as delimited
+                    files.  The most popular delimiters are probably
+                    <code>,</code> and <code>|</code>:
+                </p>
+
+<pre>~$ csv2csv --in-file /tmp/colors.csv --out-delimiter '|' --out-file /tmp/colors.psv
+~$ csv2table --file /tmp/colors.psv --delimiter '|' --copy
+create table "colors" (
+    "Id" text,
+    "Color" text,
+    "Color Name" text,
+    "Description" text,
+    "Hex #" text,
+    "Inventory" text,
+    "Add Date" text
+);
+copy "colors"("Id", "Color", "Color Name", "Description", "Hex #", "Inventory", "Add Date") from '/tmp/colors.psv' with csv header delimiter '|' quote '"';</pre>
+
+				<p>
+                    Parsing and <code>COPY</code> done just fine
+                    (<a href="https://github.com/f0rk/csv2csv">csv2csv</a>
+                    is another tool I use semi-regularly).
+				</p>
+
+                <p>
+                    Tabs show up pretty frequently too. Hard to type, so
+                    <code>csv2table</code> has some helper handling:
+                </p>
+
+<pre>~$ csv2csv --in-file /tmp/colors.csv --out-delimiter '\t' --out-file /tmp/colors.tsv
+~$ create table "colors" (
+    "Id" text,
+    "Color" text,
+    "Color Name" text,
+    "Description" text,
+    "Hex #" text,
+    "Inventory" text,
+    "Add Date" text
+);
+copy "colors"("Id", "Color", "Color Name", "Description", "Hex #", "Inventory", "Add Date") from '/tmp/colors.tsv' with csv header delimiter '  ' quote '"';</pre>
+
+                <p>
+                    Sometimes, you run into files that are kinda CSV files.
+                    Delimited, sure. But without a quote character. I commonly
+                    see this with pipe delimited files. For our data, usually I
+                    can get away by picking, say, @ for the quote character.
+                    This will prevent a quote from ever being found. So if your
+                    data has something like this in it:
+                </p>
+
+<pre>~$ cat /tmp/lol.csv
+oh|hai|there
+let's just sprinkle "|some "" characters|"around
+~$ csv2table --file /tmp/lol.csv --delimiter '|' --copy | pg test
+SET
+SET
+Null display is "&lt;NÜLLZØR&gt;".
+Timing is on.
+CREATE TABLE
+Time: 4.421 ms
+ERROR:  22P04: missing data for column "hai"
+CONTEXT:  COPY lol, line 2: "let's just sprinkle "|some "" characters|"around"
+LOCATION:  NextCopyFrom, copy.c:2989
+Time: 2.384 ms
+~$ csv2table --file /tmp/lol.csv --delimiter '|' --copy --quote '@' | pg test
+SET
+SET
+Null display is "&lt;NÜLLZØR&gt;".
+Timing is on.
+CREATE TABLE
+Time: 5.091 ms
+COPY 1
+Time: 1.432 ms</pre>
+
+				<p>
+                    Kind of a hack but I plan on some day adding a feature to
+                    handle this directly.
+                </p>
+
+                <p>
+                    Pro tip: When you're working on a Mac and need to load an
+                    Excel file, save it as a CSV in the "Windows Comma
+                    Separated (.csv)" format not in the "Comma Separated Values
+                    (.csv)" format. This will make the file loadable with
+                    <code>csv2table</code>. The default format on OSX is to use
+                    just carriage return to separate lines, which causes issues
+                    with many tools. The Windows format will also include a
+                    newline.
+                </p>
+
+                <h3>Show Me Where The Bad File Touched You</h3>
+
+                <p>
+                    The <code>colors.csv</code> file we've been working with
+                    isn't ideal. Those column names are AWFUL (as I'm sure
+                    you've noticed). <code>csv2table</code> has got your back
+                    here, too:
+                </p>
+
+<pre>~$ csv2table --file /tmp/colors.csv --mogrify
+create table "colors" (
+    "Id" text,
+    "Color" text,
+    "Color_Name" text,
+    "Description" text,
+    "Hex_" text,
+    "Inventory" text,
+    "Add_Date" text
+);</pre>
+
+				<p>
+					Better, but capitalization is really annoying too:
+				</p>
+
+<pre>~$ csv2table --file /tmp/colors.csv --mogrify --lower
+create table "colors" (
+    "id" text,
+    "color" text,
+    "color_name" text,
+    "description" text,
+    "hex_" text,
+    "inventory" text,
+    "add_date" text
+);</pre>
+
+				<p>
+                    Ahh, much better. Same rules apply to the name of the
+                    generated table. So when <a href="http://blog.ryankelly.us/2016/07/11/jimmy.html">Jimmy</a>
+                    names your files:
+                </p>
+
+<pre>~$ cp /tmp/colors.csv "/tmp/How To Name Files Like a Windows User (1).csv"
+~$ csv2table --file "/tmp/How To Name Files Like a Windows User (1).csv" --mogrify --lower
+create table "how_to_name_files_like_a_windows_user_1_" (
+    "id" text,
+    "color" text,
+    "color_name" text,
+    "description" text,
+    "hex_" text,
+    "inventory" text,
+    "add_date" text
+);</pre>
+
+				<p>
+					<code>csv2table</code> has your back there, too.
+				</p>
+
+				<p>
+					Sometimes, your file will have duplicate header names:
+				</p>
+
+<pre>~$ cat /tmp/hehe.csv
+1,1,1,1
+wow,such,descriptive,names
+~$ csv2table --file /tmp/hehe.csv --fix-duplicates
+create table "hehe" (
+    "1" text,
+    "1_1" text,
+    "1_2" text,
+    "1_3" text
+);</pre>
+
+				<p>
+                    Not the greatest names in the world, but at least you'll be
+                    able to quickly load your data. I often find the columns
+                    with the same names are also ones I'd like to ignore. So
+                    this lets me get the data loaded and me on with my life.
+                </p>
+
+                <p>
+                    Sometimes, Satan created your file. It has no headers.
+                    <code>csv2table</code> is hard at work sprinkling holy
+                    water on that dumpster fire, too:
+                </p>
+
+<pre>~$ cat /tmp/fail.csv
+there,are,no,names,at,all
+only,works,with,two,lines,minimum
+~$ csv2table --file /tmp/fail.csv --missing-headers
+create table "fail" (
+    "col_0" text,
+    "col_1" text,
+    "col_2" text,
+    "col_3" text,
+    "col_4" text,
+    "col_5" text
+);</pre>
+
+                <p>
+                    Could be better but let's see you perform that exorcism.
+                </p>
+
+                <h3>🎶Cry For The Bad Data🎶</h3>
+
+                <p>
+                    Not only will you files have bad formats, they'll have bad
+                    data, too. There's only so much juju that
+                    <code>csv2table</code> can bring to bear in this case but
+                    there's a couple flags and techniques that I find useful
+                    here.
+                </p>
+
+                <p>
+                    Most issues are just the type detection being based on the
+                    first row of data.  <code>--keep-going</code> will read
+                    more of the file and attempt to do a better job of things.
+                    It can be slow to process the whole file, however, so
+                    select a reasonably small number of lines.
+                </p>
+
+                <p>
+                    <code>--skip-parsing</code> can be used to disable type
+                    detection for specific columns. In my line of work, there
+                    are many numeric identifiers. These are actually numeric
+                    strings and not numbers. I pretty much never want them to
+                    actually end up as numbers. <code>--skip-parsing</code>
+                    will let you name these columns and prevent them from being
+                    typed (actually, they end up as <code>TEXT</code> because
+                    being untyped is a weird gray area).
+                </p>
+
+                <p>
+                    If your data can load as <code>TEXT</code> you're probably
+                    best off trying to fix it in the database. In postgres,
+                    <code>ALTER TABLE colors ALTER COLUMN "Id" TYPE INTEGER USING "Id"::INTEGER</code>
+                    is one approach. <code>USING</code> can take an arbitrary
+                    expression and since this command re-writes the entire
+                    table you end up with no wasted space. Of course, you can
+                    use <code>UPDATE</code> as well.
+                </p>
+
+                <p>
+                    If you can't get the data loaded as all <code>TEXT</code>,
+                    you've got a real steaming turd file on your hands. If you
+                    care about the data a lot, you'll have to open it in an
+                    editor and futz around until you've got all those chunks of
+                    <strike>corn</strike> bad data sorted. When you aren't
+                    super concerned about your data <code>iconv</code> can
+                    throw you a bone here. <code>sed</code> can probably help,
+                    too. If you're stuck, try one of these:
+                </p>
+
+<pre>~$ iconv -c -f utf-8 -t ascii colors.csv
+~$ iconv -f utf8 -t ascii//TRANSLIT colors.csv
+~$ sed 's/\xc2\x91\|\xc2\x92\|\xc2\xa0\|\xe2\x80\x8e//'</pre>
+
+                <p>
+                    The first command will kill anything that isn't ASCII, the
+                    second will try to remove accents and such, and the third
+                    should basically do the same as the first. More information
+                    <a href="http://stackoverflow.com/questions/8562354/remove-unicode-characters-from-textfiles-sed-other-bash-shell-methods">here</a>
+                    at stackoverflow.
+                </p>
+
+                <h3>g-g-g-g-zip</h3>
+
+                - gzip support
+
+                <p>
+                    <code>csv2table</code> supports gzip compressed files:
+                </p>
+
+<pre>~$ gzip /tmp/colors.csv
+~$ csv2table --file /tmp/colors.csv.gz --gzip --copy
+create table "colors" (
+    "Id" text,
+    "Color" text,
+    "Color Name" text,
+    "Description" text,
+    "Hex #" text,
+    "Inventory" text,
+    "Add Date" text
+);
+copy "colors"("Id", "Color", "Color Name", "Description", "Hex #", "Inventory", "Add Date") from program 'gunzip &lt; /tmp/colors.csv.gz' with csv header delimiter ',' quote '"';</pre>
+
+				<p>
+                    Note that for this to work, you need to have a version of
+                    postgres that is at least 9.3 or newer. The
+                    <code>COPY</code> command above utilizes the
+                    <code>PROGRAM</code> option to decompress the file.
+                </p>
+
+                <h3>Usage with Redshift</h3>
+
+                <p>
+                    <code>csv2table</code> also works with redshift, which is a
+                    data warehousing solution provided by AWS and based off of
+                    postgres 8.0 (with backported features and added
+                    enhancements). Working with redshift requires the file to
+                    be in Amazon's infrastructure (often in S3). You
+                    <code>csv2table</code> supports reading environment
+                    variables (of the kind used by other Amazon tools) and
+                    config files:
+                </p>
+
+<pre>~$ csv2table --file /tmp/colors.csv --redshift "&lt;ENV&gt;"</pre>
+
+                <p>
+                    The above will read the credentials from
+                    <code>AWS_ACCESS_KEY_ID</code>,
+                    <code>AWS_SECRET_ACCESS_KEY</code>, and
+                    <code>S3_BUCKET</code>. If the credentials themselves are
+                    not found, but <code>AWS_CREDENTIAL_FILE</code> is found,
+                    then <code>csv2table</code> will read the file given by
+                    that variable.
+                </p>
+
+<pre>~$ cs2table --file /tmp/colors.csv --redshift /tmp/config.ini</pre>
+
+                <p>
+                    The above will read the given config file. The names are as
+                    follows:
+                </p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Value</th>
+                            <th>Name Options</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td>Access Key Id</td>
+                            <td><code>AWSAccessKeyId</code>, <code>aws_access_key_id</code>, <code>access_key</code>, <code>s3.account_id</code></td>
+                        </tr>
+                        <tr>
+                            <td>Secret Access Key</td>
+                            <td><code>AWSSecretKey</code>, <code>aws_secret_access_key</code>, <code>secret_key</code>, <code>s3.private_key</code></td>
+                        </tr>
+                        <tr>
+                            <td>S3 Bucket</td>
+                            <td><code>s3.bucket</code>, <code>s3.transfer_bucket</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    There are historical reasons for these names but the
+                    conventions are typical of those I've seen in the wild and
+                    those used in the codebase at work.
+                </p>
+
+                <p>
+                    The S3 bucket option is sort-of non-standard but necessary
+                    to upload the file to or read the file from.
+                    <code>csv2table</code> will upload the file for when used
+                    with the <code>--redshift-upload</code> option. Otherwise,
+                    it will assume that the file is already uploaded to the
+                    given bucket.
+                </p>
+
+                <p>
+                    The gzip format is supported here as well and I would
+                    recommned using it with large files to reduce upload times
+                    (I haven't measured load times with and without compression
+                    but anecdotally it seems to be at least as fast when the
+                    files are compressed).
+                </p>
+
+                <p>
+                    <code>csv2table</code> works without third party libraries
+                    when used with postgres. With redshift, however,
+                    <code>boto</code> must be available for the
+                    <code>--redshift-upload</code> option to work. Sorry about
+                    that.
+                </p>
+
+                <h3>Some more advanced features</h3>
+
+                <p>
+                    <code>csv2table</code> has many, many more options. The
+                    ones I often reach for can be grouped into three buckets:
+                    schema handling, ancillary data, and indexing,
+                </p>
+
+                <p>
+                    Schema handling options let you control how the table is
+                    created:
+                </p>
+
+                <ul>
+                    <li>
+                        <b><code>--drop</code></b>. Drop the table first, if it
+                        exists.
+                    </li>
+
+                    <li>
+                        <b><code>--truncate</code></b>. Empty the table before
+                        copying into it.
+                    </li>
+
+                    <li>
+                        <b><code>--no-create</code></b>. Don't create the
+                        table. Useful when loading multiple files into a table.
+                    </li>
+
+                    <li>
+                        <b><code>--temporary</code></b>. Make the table a
+                        <code>TEMPORARY</code> table.
+                    </li>
+
+                    <li>
+                        <b><code>--cine</code></b>. <code>CREATE IF NOT EXISTS</code>.
+                    </li>
+
+                    <li>
+                        <b><code>--create-schema</code></b>. When using
+                        <code>--schema</code> this option can be used to create
+                        the schema as well.
+                    </li>
+                </ul>
+
+                <p>
+                    Ancillary data options allow you to add in some additional
+                    information to your table:
+                </p>
+
+                <ul>
+                    <li>
+                        <b><code>--file-column</code></b>. Add a column with
+                        the name of the file the data was loaded from.
+                    </li>
+
+                    <li>
+                        <b><code>--serial-column</code></b>. Add a
+                        <code>SERIAL</code> column with the given name.
+                    </li>
+                </ul>
+
+                <p>
+                    Lastly and leastly, indexing:
+                </p>
+
+                <ul>
+                    <li>
+                        <b><code>--primary-key</code></b>. Make the named
+                        column(s) the primary key of the table.
+                    </li>
+                </ul>
+
+                <h3>Conclusion</h3>
+
+                <p>
+                    Put those CSV files into your database! Happy querying!
+                </p>
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                &copy; 2016 Ryan Kelly.
+                <a href="https://github.com/f0rk/blog.ryankelly.us/" target="_blank">GitHub</a>.
+                <a href="https://www.linkedin.com/in/rpkelly" target="_blank">LinkedIn</a>.
+                <a href="https://twitter.com/rpkelly22" target="_blank">Twitter</a>.
+            </p>
+        </footer>
+
+        <script>
+            (function(i,s,o,g,r,a,m){i["GoogleAnalyticsObject"]=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,"script","https://www.google-analytics.com/analytics.js","ga");
+
+            ga("create", "UA-80585364-1", "auto");
+            ga("send", "pageview");
+        </script>
+
+        <script type="text/javascript" src="/js/social.js"></script>
+    </body>
+</html>
