@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="How to control access to your serverless services with API Keys and Usage Plans">
+        <meta name="keywords" content="serverless aws lambda api keys usage plans">
+
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:site" content="@rpkelly22">
+        <meta name="twitter:title" content="API Keys and Usage Plans with AWS API Gateway">
+        <meta name="twitter:description" content="How to control access to your serverless services with API Keys and Usage Plans">
+        <meta name="twitter:image" content="http://blog.ryankelly.us/img/cards/aws.png">
+        <meta name="twitter:image:alt" content="Amazon Web Services">
+        <meta name="twitter:tweet" content="Access control for #serverless computing">
+
+        <meta property="og:title" content="API Keys and Usage Plans with AWS API Gateway" />
+        <meta property="og:description" content="How to control access to your serverless services with API Keys and Usage Plans" />
+        <meta property="og:url" content="http://blog.ryankelly.us/2016/12/13/api-keys-usage-plans-aws-api-gateway.html" />
+        <meta property="og:image" content="http://blog.ryankelly.us/img/cards/aws.png" />
+
+        <title>blog</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href="/css/main.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1><a href="/">blog?</a></h1>
+            </header>
+
+            <div class="post">
+                <h1>API Keys and Usage Plans with AWS API Gateway</h1>
+                <h3>13 December 2016</h3>
+
+                <div class="social">
+                    <a href="https://twitter.com/share" class="twitter-button" target="_blank"><i class="fa fa-twitter"></i> tweet</a>
+                </div>
+
+                <p>
+                    <i>
+                        This is an update of the example code from the post
+                        <a href="/2016/08/07/going-serverless-with-aws-lambda-and-api-gateway.html">Going Serverless with AWS Lambda and API Gateway</a>.
+                        Grab that code <a href="https://github.com/f0rk/meditations">here</a>.
+                    </i>
+                </p>
+
+                <p>
+                    AWS makes it easy to throw up a quick API. But how do you
+                    prevent abuse? You are, after all, paying for the resources
+                    that others are using. One way is with API keys and usage
+                    plans.
+                </p>
+
+                <h2>What are API keys?</h2>
+
+                <p>
+                    In the general sense, API keys are a token with authorizes
+                    you to access a resource. API keys are <strong>not</strong>
+                    a form of authentication, as API keys are not generally
+                    considered secrets nor are they necessarily protected as
+                    such.
+                </p>
+
+                <p>
+                    On AWS, API Keys are a component of the API Gateway product
+                    offering. They are a system that allows for the creation
+                    and management of API keys as associated with API Gateway
+                    specific concepts, such as deployments or Usage Plans, or
+                    AWS specific concepts, such as the SaaS Marketplace.
+                </p>
+
+                <h2>What are Usage Plans?</h2>
+
+                <p>
+                    Usage Plans are an API Gateway component that allows you to
+                    assign specific API keys to your API consumers and control
+                    the rate and quantity of requests that they make.
+                    Additionally, you can also query how many requests were
+                    made to your API by each Usage Plan. If you bill
+                    per-request for your API, this feature allows you to easily
+                    track how many requests were made, report on it, and
+                    through integration with other Amazon services, easily bill
+                    for them.
+                </p>
+
+                <p>
+                    Usage plans aren't strictly necessary for you to use API
+                    keys. However, I would recommend that if you are exposing
+                    APIs to clients, setting up rate limiting and request
+                    limits as well as tracking these metrics are necessary to
+                    ensure your services are not abused. Sometimes, bugs in the
+                    software of clients can lead to runaway request conditions.
+                    Neither you (since your API is limited by AWS) nor your
+                    client (since they are being billed by request or would
+                    like to at least access your service) would like situations
+                    like this. Limit your APIs.
+                </p>
+
+                <h2>Why use API Keys?</h2>
+
+                <p>
+                    The primary strength of the API key approach is simplicity.
+                    The value is passed as part of the <code>x-api-key</code>
+                    header. There is no tricky crypto or request/response
+                    challenge sequence to contend with. Consumers of your API
+                    will be able to quickly and easily integrate with you. In a
+                    situation where you bill for usage, this can help with
+                    onboard and reduce time to revenue generation.
+                </p>
+
+                <h2>What about arguments against?</h2>
+
+                <p>
+                    API keys doesn't integrate with Amazon's IAM offering. This
+                    can introduce challenges when using API Gateway to manage
+                    solely internal services when you want to central manage
+                    all access with IAM. You can still manage access with IAM,
+                    just not with API keys. For that, you will need to use a
+                    custom authorizer (a perfectly fine, albeit more involved,
+                    solution).
+                </p>
+
+                <p>
+                    Too, API keys don't support HMAC signatures or other crypto
+                    goodies. The key is a string. Having the string gives you
+                    access. Depending on your use case, you may want to opt for
+                    a more secure approach.
+                </p>
+
+                <h2>Alright, alright. Show me the code.</h2>
+
+                <p>
+                    First, we need to create an API Key:
+                </p>
+
+<pre>meditations_api_key = apigateway_client.create_api_key(
+    name="meditations",
+    description="ohm",
+    enabled=True,
+    generateDistinctId=True,
+)</pre>
+
+                <p>
+                    Here, we create a named key that is enabled and we let API
+                    Gateway generate the key value for us. We could pass our
+                    own value as well.
+                </p>
+
+                <p>
+                    Then, we'll create a Usage Plan:
+                </p>
+
+<pre>meditations_usage_plan = apigateway_client.create_usage_plan(
+    name="meditations",
+    description="ohm",
+    apiStages=[
+        {
+            "apiId": api["id"],
+            "stage": "prod",
+        },
+    ],
+    throttle={
+        "burstLimit": 250,
+        "rateLimit": 100,
+    },
+    quota={
+        "limit": 10000,
+        "period": "DAY",
+    }
+)</pre>
+
+                <p>
+                    We've created a usage plan for our meditations API for our
+                    and prod stage. We've set the per-second request limit to
+                    100 (<code>rateLimit</code>) and given some padding to 250
+                    for bursting (<code>burstLimit</code>).  The way these work
+                    are documented by AWS', but I didn't have a clear sense of
+                    over what time period the burst limit applied. We limit the
+                    users of our usage plan to 10,000 requests per day. You can
+                    also specify by week and month.
+                </p>
+
+                <p>
+                    Note that usage is by plan, not by key. You can have many
+                    keys associated with a usage plan. Speaking of which:
+                </p>
+
+<pre>meditations_usage_plan_key = apigateway_client.create_usage_plan_key(
+    usagePlanId=meditations_usage_plan["id"],
+    keyId=meditations_api_key["id"],
+    keyType="API_KEY",
+)</pre>
+
+                <p>
+                    We need to associate our key with our usage plan.
+                    <code>keyType</code> is required but only assumes the value
+                    <code>API_KEY</code>.
+                </p>
+
+                <p>
+                    We're now very close to getting API keys up running. The
+                    last step is to require the endpoint to use an API key.
+                    Unfortunately, I can't figure out how to get this done with
+                    swagger.
+                </p>
+
+                <p>
+                    So, we'll brute force it with boto:
+                </p>
+
+<pre>meditations_resources = apigateway_client.get_resources(restApiId=api["id"])
+
+main_resource = [res for res in meditations_resources["items"] if res["path"] == "/"][0]
+
+apigateway_client.update_method(
+    restApiId=api["id"],
+    resourceId=main_resource["id"],
+    httpMethod="POST",
+    patchOperations=[
+        {
+            "op": "replace",
+            "path": "/apiKeyRequired",
+            "value": "true",
+        }
+    ]
+)</pre>
+
+                <p>
+                    A hack, for sure. But better than nothing. Or the
+                    console...
+                </p>
+
+                <p>
+                    Alternatively, go the console, API Gateway &gt; APIs &gt;
+                    Meditations &gt; / &gt; POST &gt; Method Request &gt; API
+                    Key Required. Flip that to true and save.
+                </p>
+
+                <p>
+                    If anyone knows how to do this via swagger, drop me a line.
+                </p>
+
+                <h2>BEHOLD!</h2>
+
+<pre>$ curl -X POST https://a1b2c3d4.execute-api.us-east-1.amazonaws.com/prod/
+{"message": "Forbidden"}
+$ curl -X POST -H "x-api-key: zM9Z0CNeM25UeMprorUJC8JTo2ypYj1Z2yR2Jwi7" https://a1b2c3d4.execute-api.us-east-1.amazonaws.com/prod/
+{"status": "success", "meditation": "testing is broken because I'm lazy"}</pre>
+
+                <p>
+                    And that's all there is to it.
+                </p>
+
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                &copy; 2016 Ryan Kelly.
+                <a href="https://github.com/f0rk/blog.ryankelly.us/" target="_blank">GitHub</a>.
+                <a href="https://www.linkedin.com/in/rpkelly" target="_blank">LinkedIn</a>.
+                <a href="https://twitter.com/rpkelly22" target="_blank">Twitter</a>.
+            </p>
+        </footer>
+
+        <script>
+            (function(i,s,o,g,r,a,m){i["GoogleAnalyticsObject"]=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,"script","https://www.google-analytics.com/analytics.js","ga");
+
+            ga("create", "UA-80585364-1", "auto");
+            ga("send", "pageview");
+        </script>
+
+        <script type="text/javascript" src="/js/social.js"></script>
+    </body>
+</html>
