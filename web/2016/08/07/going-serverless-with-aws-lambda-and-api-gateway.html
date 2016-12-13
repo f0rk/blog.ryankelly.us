@@ -332,6 +332,20 @@ def handler(event, context):
                     "Things in AWS" and ensures each item exists.
                 </p>
 
+                <p>
+                    There is a caveat here: If you have just created your AWS
+                    account, sending email with SES (Simple Email Service) will
+                    not yet be available. Presumably, this is to limit the use
+                    of SES as a platform for spammers. As a result, the
+                    monitoring portions of the deploy script will fail with an
+                    error like "An error occurred (OptInRequired) when calling
+                    the PutMetricAlarm operation: The AWS Access Key Id needs a
+                    subscription for the service". This will work itself out if
+                    you wait for a day or so. For the time being, you can
+                    comment out the related code in
+                    <code>tools/deploy.py</code> (around lines 211-273).
+                </p>
+
                 <h2>Let's deploy this shit</h2>
 
                 <p>
