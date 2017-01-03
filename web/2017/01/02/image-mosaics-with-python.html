@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="How to create image mosaics or tiled images with python">
+        <meta name="keywords" content="python pil pillow numpy image mosaic">
+
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:site" content="@rpkelly22">
+        <meta name="twitter:title" content="Image Mosaics With Python">
+        <meta name="twitter:description" content="How to create image mosaics or tiled images with python">
+        <meta name="twitter:image" content="http://blog.ryankelly.us/img/cards/python.png">
+        <meta name="twitter:image:alt" content="Python">
+        <meta name="twitter:tweet" content="How to create image mosaics with #python">
+
+        <meta property="og:title" content="Image Mosaics With Python" />
+        <meta property="og:description" content="How to create image mosaics or tiled images with python" />
+        <meta property="og:url" content="http://blog.ryankelly.us/2017/01/02/image-mosaics-with-python.html" />
+        <meta property="og:image" content="http://blog.ryankelly.us/img/cards/python.png" />
+
+        <title>blog</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href="/css/main.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1><a href="/">blog?</a></h1>
+            </header>
+
+            <div class="post">
+                <h1>Image Mosaics With Python</h1>
+                <h3>02 January 2017</h3>
+
+                <div class="social">
+                    <a href="https://twitter.com/share" class="twitter-button" target="_blank"><i class="fa fa-twitter"></i> tweet</a>
+                </div>
+
+                <img src="/2017/01/02/final-mosaic.jpg" style="margin-top: 20px" />
+
+                <p>
+                    I'm sure you've seen an image mosaic before. Each pixel in
+                    the original image has been replaced with an entire image.
+                    The tiled, jagged result usually resembles the original
+                    image at a distance and, when good component images are
+                    chosen, presents the viewer with a very complex image to
+                    explore. Let's create some with python.
+                </p>
+
+                <h2>The General Idea</h2>
+
+                <p>
+
+                    We start with a reference image: this is the image whose
+                    pixels will be replaced with individual tile images. The
+                    larger the image, the larger the output. I recommend you
+                    start small. Choose a relatively simple image, and scale it
+                    downwards. I've found that images in the size range of
+                    20-30 pixels tall or wide produce good output.
+                </p>
+
+                <p>
+                    The reference image should also not include transparency.
+                    When I was first writing this code, I couldn't figure out
+                    why the simple image I was using for a reference image
+                    never resulted in output that looked anything other than
+                    random. As I dug into the problem, I realized that every
+                    single pixel was the same color. But the image still looked
+                    like an image because each pixel had varied transparency.
+                    You can avoid this problem by ensuring your reference image
+                    is not transparent.
+                </p>
+
+                <p>
+                    You can find the reference image for this article
+                    <a href="/2017/01/02/reference.jpg">here</a>.
+                </p>
+
+                <p>
+                    This is what it looks scaled up to a visible size:
+                </p>
+
+                <img src="/2017/01/02/reference.jpg" style="width: 80px" />
+
+                <p>
+                    Yep. Cross of the Greek flag. I recently took a trip to
+                    Greece, and the pictures from the trip will also form our
+                    tile sources as well.
+                </p>
+
+                <p>
+                    We also need a directory of images to use as sources. Each
+                    image will be cropped square and scaled down to the tile
+                    size as it is loaded. Technically, you can use other aspect
+                    ratios for the pixels of your mosaic. But the presented
+                    code doesn't allow for that. The images will be cropped
+                    square by trimming evenly from each side (i.e. a
+                    center-square crop). Other methods certainly exist: see my
+                    <a href="https://github.com/f0rk/thumbify">thumbify
+                    project</a> for a look at alternative methods.
+                </p>
+
+                <p>
+                    Each source image will then have its average color
+                    computed. The average color is computed by averaging the
+                    red, blue, and green channels individually and then
+                    returning that triple as the average color.
+                </p>
+
+                <p>
+                    You can find the source images for this article
+                    <a href="/2017/01/02/sources.tar.gz">here</a>.
+                </p>
+
+                <p>
+                    The last important idea is tile size. This is how large
+                    each component image of the mosaic is. The larger the tile
+                    size, the larger and more detailed the output image.
+                    However, there is a memory trade-off (in this
+                    implementation) with using larger tile sizes. I find a size
+                    of 80 works well from a memory and output size standpoint.
+                    You can then scale the final image as needed for printing,
+                    etc.
+                </p>
+
+                <h2>Our choice of libraries</h2>
+
+                <p>
+                    Since I know next to nothing about how image processing
+                    works in practice and because I'm way too lazy to even
+                    explore reinventing this wheel, our image processing will
+                    be done by <code>pillow</code> the <code>PIL</code> fork.
+                </p>
+
+                <p>
+                    There's also some light math that I will handle by using
+                    <code>numpy</code> (though, we could probably get on
+                    without it).
+                </p>
+
+                <p>
+                    If you're using the code from the repo (skip to the end for
+                    link), run the setup script. Otherwise just make sure you
+                    have these two dependencies installed. They're the only
+                    ones.
+                </p>
+
+                <h2>Loading our sources</h2>
+
+                <p>
+                    As mentioned above, we load all of our source images up
+                    front and perform some preprocessing on them.
+                </p>
+
+                <p>
+                    First, we crop the image:
+                </p>
+
+<pre>def crop_image(img):
+
+    if img.width > img.height:
+        new_width = img.height
+        new_height = img.height
+
+        start_x = (img.width - img.height) / 2
+        start_y = 0
+
+        img = img.crop((
+            start_x,
+            start_y,
+            start_x + new_width,
+            start_y + new_height,
+        ))
+    elif img.height > img.width:
+        new_width = img.width
+        new_height = img.width
+
+        start_x = 0
+        start_y = (img.height - img.width) / 2
+
+        img = img.crop((
+            start_x,
+            start_y,
+            start_x + new_width,
+            start_y + new_height,
+        ))
+
+    return img
+
+source_image = crop_image(source_image)</pre>
+
+                <p>
+                    Then we thumbnail the image to the appropriate tile size,
+                    to save on memory:
+                </p>
+
+<pre>source_image.thumbnail((tile_size, tile_size))</pre>
+
+                <p>
+                    Next, we'll convert the image to black and white (if
+                    necessary) and force it to RGB. This step is necessary to
+                    get <code>r, g, b</code> triples for calculating the
+                    average color:
+                </p>
+
+<pre>if not is_color:
+    source_image = source_image.convert("L")
+
+# always need to force into RGB only
+source_image = source_image.convert("RGB")</pre>
+
+                <p>
+                    And here we calculate the average color:
+                </p>
+
+<pre>def average_color(img):
+    """Return the average color of the given image.
+
+    :param img: An image object.
+    :returns: A three-tuple representing the average color.
+
+    """
+
+    h = img.histogram()
+
+    # split into red, green, blue
+    r = h[0:256]
+    g = h[256:512]
+    b = h[512:768]
+
+    def wavg(s):
+        """Find the weighted average of the sequence, which is a color channel.
+
+        :param s: A color channel sequence.
+        :returns: The weighted average.
+
+        """
+
+        # i is the index which is the channel value. w is the weight which is
+        # the frequency of occurence.
+        weighted = sum(i*w for i, w in enumerate(s))
+
+        # sum of all values, which is how many times they occur
+        total = sum(s)
+
+        return int(weighted / float(total))
+
+    return (wavg(r), wavg(g), wavg(b))
+
+average_r, average_g, average_b = average_color(source_image)</pre>
+
+                <p>
+                    You'll note that we're using the image's histogram to do
+                    this. You could also iterate of the image's pixels and
+                    compute the average that way, but the histogram method is
+                    faster. I had originally iterated over pixels, but the
+                    implementation was really too slow to be usable when the
+                    number of source images was large.
+                </p>
+
+                <h2>Pixel selection</h2>
+
+                <p>
+                    Now that our source images are loaded, we need to replace
+                    our pixels with images. Good mosaics limit repetition of
+                    images to the minimum amount possible. We'd like to mimic
+                    this, so we'll select from our pool of source images
+                    without replacement, until the pool is empty.
+                </p>
+
+                <p>
+                    And yet, if we simply iterate over the pixels from top left
+                    to bottom right as if we were reading the image
+                    left-to-right, the results will be less than optimal. All
+                    of the best matching images will cluster in the top left,
+                    and the image will start to degrade in quality as we work
+                    our way down. Here's an example of what that looks like:
+                </p>
+
+                <img src="/2017/01/02/ordered-mosaic.jpg" />
+
+                <p>
+                    And the code:
+                </p>
+
+<pre>def ordered_pixels(reference_image):
+
+    pixels = []
+    for x in range(reference_image.width):
+        for y in range(reference_image.height):
+            pixels.append((x, y))
+
+    return pixels</pre>
+
+                <p>
+                    We could attempt to improve on this by saying that midtones
+                    are the most important pixels and therefor should be filled
+                    first. Which is an improvement for our reference image:
+                </p>
+
+                <img src="/2017/01/02/midtone-mosaic.jpg" />
+
+                <p>
+                    Related code:
+                </p>
+
+<pre>def midtone_pixels(reference_image):
+
+    with_brightness = _pixels_with_brightness(reference_image)
+
+    total_brightness = sum([b for b, _ in with_brightness])
+    average_brightness = total_brightness / len(with_brightness)
+
+    def midtone_sort(v):
+        b, _ = v
+        return abs(average_brightness - b)
+
+    with_brightness.sort(key=midtone_sort)
+
+    return [(x, y) for _, (x, y) in with_brightness]</pre>
+
+                <p>
+                    The same applies to brightest pixels for us:
+                </p>
+
+                <img src="/2017/01/02/brightest-mosaic.jpg" />
+
+                <p>
+                    And code for brightest:
+                </p>
+
+<pre>def brightest_pixels(reference_image):
+
+    pixels = darkest_pixels(reference_image)
+    pixels.reverse()
+
+    return pixels</pre>
+
+                <p>
+                    However, it seems darkest produces a good image for us:
+                </p>
+
+                <img src="/2017/01/02/darkest-mosaic.jpg" />
+
+                <p>
+                    Code for darkest:
+                </p>
+
+<pre>def darkest_pixels(reference_image):
+
+    with_brightness = _pixels_with_brightness(reference_image)
+
+    with_brightness.sort()
+
+    return [(x, y) for _, (x, y) in with_brightness]</pre>
+
+                <p>
+                    But note that if we had a different, more nuanced reference
+                    image and possibly a different set of source images, the
+                    outcome could be different. You may want to play around
+                    with these different methods to see if they offer an
+                    improvement for your purposes.
+                </p>
+
+                <p>
+                    The default implementation is to choose pixels at random
+                    and try to fill them. You may not always get a great image
+                    on the first try, but run it a few times to generate a
+                    dozen or so candidates. You can then select the one that
+                    you think looks best. Which is, after all, important.
+                </p>
+
+                <img src="/2017/01/02/random-mosaic.jpg" />
+
+                <p>
+                    And the unintersting random code:
+                </p>
+
+<pre>def random_pixels(reference_image):
+
+    pixels = ordered_pixels(reference_image)
+
+    random.shuffle(pixels)
+
+    return pixels</pre>
+
+                <p>
+                    Not an improvement over darkest. We'll choose darkest for
+                    our "final" image. Play around with the various options to
+                    see which produces a good output for you.
+                </p>
+
+                <h2>Finding matches</h2>
+
+                <p>
+                    Once we've selected our pixels, we need to find a matching
+                    image. We do this by comparing the "distance" between the
+                    average color of the source images and the color of the
+                    given pixel. We use the <code>norm</code> function from
+                    <code>numpy</code>'s linear algebra library to achieve
+                    this. <code>norm</code> gives the length of a vector,
+                    which we will use to determine how close each pixel and the
+                    average color of each source image are:
+                </p>
+
+<pre>pixel = reference_image.getpixel((x, y))
+r = pixel[0]
+g = pixel[1]
+b = pixel[2]
+reference_vec = numpy.array([[r, g, b]])
+
+normed_images = []
+for image, avg_color in pool:
+    source_vec = numpy.array([avg_color])
+
+    norm = numpy.linalg.norm(reference_vec - source_vec)
+    normed_images.append((norm, image, avg_color))
+
+normed_images.sort()</pre>
+
+                <p>
+                    But we also don't want to be too greedy. If we always take
+                    the closest matching pixel, we tend to end up with similar
+                    images clustered in similar looking pixel locations. This
+                    isn't a very good look for the output.
+                </p>
+
+                <p>
+                    Instead, we choose randomly among the closest 20:
+                </p>
+
+<pre>top20 = normed_images[:20]
+random.shuffle(top20)
+
+_, selected_image, avg_color = top20[0]
+
+pool.remove((selected_image, avg_color))</pre>
+
+                <h2>Other approaches</h2>
+
+                <p>
+                    In researching this post, I came across a really cool
+                    article on the Wolfram blog about
+                    <a href="http://blog.wolfram.com/2008/05/02/making-photo-mosaics/">using Mathematica to create image mosaics</a>.
+                    It goes through a bunch of other interesting approaches.
+                    I may cover the implementation of them in python in a
+                    future post.
+                </p>
+
+                <h2>Generating the ouptut</h2>
+
+                <p>
+                    While we were selecting images for each pixel, we were
+                    placing the source image of choice into an N x M matrix,
+                    initially populated with <code>Node</code>.
+                </p>
+
+                <p>
+                    After we've populated the matrix, we can simply walk over
+                    the rows and columns and paste each tile into the output
+                    image:
+                </p>
+
+<pre>y_offset = 0
+for row in output_matrix:
+
+    x_offset = 0
+
+    for image in row:
+
+        paste_box = (
+            x_offset,
+            y_offset,
+            x_offset + tile_size,
+            y_offset + tile_size,
+        )
+
+        output_image.paste(image, paste_box)
+
+        x_offset += tile_size
+
+    y_offset += tile_size
+
+return output_image</pre>
+
+                <p>
+                    And that's it!
+                </p>
+
+                <img src="/2017/01/02/final-mosaic.jpg" />
+
+                <h2>Do you have this code somewhere that I can use it?</h2>
+
+                <p>
+                    Funny you should ask! Yes: <a href="https://github.com/f0rk/mosaicify">GitHub</a>.
+                </p>
+
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                &copy; 2016-2017 Ryan Kelly.
+                <a href="https://github.com/f0rk/blog.ryankelly.us/" target="_blank">GitHub</a>.
+                <a href="https://www.linkedin.com/in/rpkelly" target="_blank">LinkedIn</a>.
+                <a href="https://twitter.com/rpkelly22" target="_blank">Twitter</a>.
+            </p>
+        </footer>
+
+        <script>
+            (function(i,s,o,g,r,a,m){i["GoogleAnalyticsObject"]=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,"script","https://www.google-analytics.com/analytics.js","ga");
+
+            ga("create", "UA-80585364-1", "auto");
+            ga("send", "pageview");
+        </script>
+
+        <script type="text/javascript" src="/js/social.js"></script>
+    </body>
+</html>
