@@ -370,12 +370,13 @@ average_r, average_g, average_b = average_color(source_image)</pre>
                 </p>
 
                 <p>
-                    And yet, if we simply iterate over the pixels from top left
-                    to bottom right as if we were reading the image
-                    left-to-right, the results will be less than optimal. All
-                    of the best matching images will cluster in the top left,
-                    and the image will start to degrade in quality as we work
-                    our way down. Here's an example of what that looks like:
+                    And yet, if we simply iterate over the pixels from left to
+                    right (or whatever simple pattern) as if we were reading
+                    the image left-to-right, the results will be less than
+                    optimal. All of the best matching images will cluster on
+                    the left, and the image will start to degrade in quality as
+                    we work our way across. Here's an example of what that
+                    looks like:
                 </p>
 
                 <img src="/2017/01/02/ordered-mosaic.jpg" />
