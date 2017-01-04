@@ -264,6 +264,95 @@ average_r, average_g, average_b = average_color(source_image)</pre>
                     number of source images was large.
                 </p>
 
+                <p>
+                    Here are some of our sample tile images converted to their
+                    average color:
+                </p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Before</th>
+                            <th>After</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <img src="/2017/01/02/source-60.jpg" style="width: 80px" />
+                            </td>
+                            <td>
+                                <img src="/2017/01/02/average-60.jpg" style="width: 80px" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <img src="/2017/01/02/source-174.jpg" style="width: 80px" />
+                            </td>
+                            <td>
+                                <img src="/2017/01/02/average-174.jpg" style="width: 80px" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <img src="/2017/01/02/source-409.jpg" style="width: 80px" />
+                            </td>
+                            <td>
+                                <img src="/2017/01/02/average-409.jpg" style="width: 80px" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    Varying shades of mostly gray. Alternatively, we could
+                    attempt to choose the most dominant color from the image.
+                    For images with a limited set of colors, this might be a
+                    better approximation of what the eye is seeing. Here are
+                    some examples of that:
+                </p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Before</th>
+                            <th>After</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <img src="/2017/01/02/source-60.jpg" style="width: 80px" />
+                            </td>
+                            <td>
+                                <img src="/2017/01/02/commonest-60.jpg" style="width: 80px" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <img src="/2017/01/02/source-174.jpg" style="width: 80px" />
+                            </td>
+                            <td>
+                                <img src="/2017/01/02/commonest-174.jpg" style="width: 80px" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <img src="/2017/01/02/source-409.jpg" style="width: 80px" />
+                            </td>
+                            <td>
+                                <img src="/2017/01/02/commonest-409.jpg" style="width: 80px" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    Some more color there, at least. The default is to use
+                    average color, but <code>commonest_color</code> is
+                    available as well.
+                </p>
+
                 <h2>Pixel selection</h2>
 
                 <p>
@@ -494,6 +583,14 @@ return output_image</pre>
                 </p>
 
                 <img src="/2017/01/02/final-mosaic.jpg" />
+
+                <p>
+                    We also explored using the most common color above. Without
+                    revisiting every moscaic, let's see what a final ouptut
+                    using the most common color looks like:
+                </p>
+
+                <img src="/2017/01/02/commonest-mosaic.jpg" />
 
                 <h2>Do you have this code somewhere that I can use it?</h2>
 
