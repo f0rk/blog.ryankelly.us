@@ -382,6 +382,12 @@ average_r, average_g, average_b = average_color(source_image)</pre>
                 <img src="/2017/01/02/ordered-mosaic.jpg" />
 
                 <p>
+                    If we had a lot more source images, the problem wouldn't be
+                    as pronounced. Even with thousands of images, though, you
+                    can still run into this issue.
+                </p>
+
+                <p>
                     And the code:
                 </p>
 
@@ -395,9 +401,16 @@ average_r, average_g, average_b = average_color(source_image)</pre>
     return pixels</pre>
 
                 <p>
-                    We could attempt to improve on this by saying that midtones
-                    are the most important pixels and therefor should be filled
-                    first. Which is an improvement for our reference image:
+                    The left-to-right pattern is a result of us iterating over
+                    columns, rather than rows. The pattern would just go top to
+                    bottom if we iterated y before x, though.
+                </p>
+
+                <p>
+                    Moving on, we could attempt to improve on this by saying
+                    that midtones are the most important pixels and therefor
+                    should be filled first. Which is an improvement for our
+                    reference image:
                 </p>
 
                 <img src="/2017/01/02/midtone-mosaic.jpg" />
