@@ -441,7 +441,7 @@ average_r, average_g, average_b = average_color(source_image)</pre>
     return [(x, y) for _, (x, y) in with_brightness]</pre>
 
                 <p>
-                    However, it seems brightest produces a good image for us:
+                    However, it seems brightest produces a good-er image for us:
                 </p>
 
                 <img src="/2017/01/02/brightest-mosaic.jpg" />
@@ -458,7 +458,13 @@ average_r, average_g, average_b = average_color(source_image)</pre>
     return pixels</pre>
 
                 <p>
-                    But note that if we had a different, more nuanced reference
+                    I would say the output using darkest is probably slightly
+                    more defined, but the lightest is more true to the color of
+                    the original image.
+                </p>
+
+                <p>
+                    Also note that if we had a different, more nuanced reference
                     image and possibly a different set of source images, the
                     outcome could be different. You may want to play around
                     with these different methods to see if they offer an
