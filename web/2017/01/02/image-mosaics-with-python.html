@@ -311,7 +311,7 @@ average_r, average_g, average_b = average_color(source_image)</pre>
                 </table>
 
                 <p>
-                    Varying shades of mostly gray. Alternatively, we could
+                    Varying shades of tinted gray. Alternatively, we could
                     attempt to choose the most dominant color from the image.
                     For images with a limited set of colors, this might be a
                     better approximation of what the eye is seeing. Here are
@@ -421,25 +421,9 @@ average_r, average_g, average_b = average_color(source_image)</pre>
     return [(x, y) for _, (x, y) in with_brightness]</pre>
 
                 <p>
-                    The same applies to brightest pixels for us:
+                    Darkest is an improvement, too:
                 </p>
 
-                <img src="/2017/01/02/brightest-mosaic.jpg" />
-
-                <p>
-                    And code for brightest:
-                </p>
-
-<pre>def brightest_pixels(reference_image):
-
-    pixels = darkest_pixels(reference_image)
-    pixels.reverse()
-
-    return pixels</pre>
-
-                <p>
-                    However, it seems darkest produces a good image for us:
-                </p>
 
                 <img src="/2017/01/02/darkest-mosaic.jpg" />
 
@@ -454,6 +438,23 @@ average_r, average_g, average_b = average_color(source_image)</pre>
     with_brightness.sort()
 
     return [(x, y) for _, (x, y) in with_brightness]</pre>
+
+                <p>
+                    However, it seems brightest produces a good image for us:
+                </p>
+
+                <img src="/2017/01/02/brightest-mosaic.jpg" />
+
+                <p>
+                    And code for brightest:
+                </p>
+
+<pre>def brightest_pixels(reference_image):
+
+    pixels = darkest_pixels(reference_image)
+    pixels.reverse()
+
+    return pixels</pre>
 
                 <p>
                     But note that if we had a different, more nuanced reference
