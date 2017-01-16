@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="Stochastic image mosaics with Python">
+        <meta name="keywords" content="python pil pillow numpy image mosaic">
+
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:site" content="@rpkelly22">
+        <meta name="twitter:title" content="Image Mosaics With Python, Part II">
+        <meta name="twitter:description" content="Stochastic image mosaics with Python">
+        <meta name="twitter:image" content="http://blog.ryankelly.us/2017/01/15/final-mosaic.jpg">
+        <meta name="twitter:image:alt" content="Python">
+        <meta name="twitter:tweet" content="How to create image mosaics with #python">
+
+        <meta property="og:title" content="Image Mosaics With Python, Part II" />
+        <meta property="og:description" content="Stochastic image mosaics with Python" />
+        <meta property="og:url" content="http://blog.ryankelly.us/2017/01/15/image-mosaics-with-python-part-ii.html" />
+        <meta property="og:image" content="http://blog.ryankelly.us/2017/01/15/final-mosaic.jpg" />
+
+        <title>blog</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href="/css/main.css" rel="stylesheet" type="text/css">
+
+        <style type="text/css">
+            td {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1><a href="/">blog?</a></h1>
+            </header>
+
+            <div class="post">
+                <h1>Image Mosaics With Python, Part II</h1>
+                <h3>15 January 2017</h3>
+
+                <div class="social">
+                    <a href="https://twitter.com/share" class="twitter-button" target="_blank"><i class="fa fa-twitter"></i> tweet</a>
+                </div>
+
+                <img src="/2017/01/02/final-mosaic.jpg" style="margin-top: 20px" />
+
+                <p>
+                    In the second part of the series on image mosaics, we
+                    explore creating mosaics with a stochastic method.
+                </p>
+
+                <p>
+                    <a href="/2017/01/02/image-mosaics-with-python.html">
+                        (In the first part, we explored other methods. There's
+                        also good background on the terms used in this
+                        article.)
+                    </a>
+                </p>
+
+                <h2>What do you mean by stochastic?</h2>
+
+                <p>
+                    By stochastic, I mean that the output image is constructed
+                    by a series of random actions.
+                </p>
+
+                <p>
+                    The first of these is selecting a set of tile images. We
+                    choose an image from our pool of source images to represent
+                    each pixel in the reference images. At this point, the
+                    image is completely random.
+                </p>
+
+                <img src="/2017/01/15/random.jpg" />
+
+                <p>
+
+                    We then select pairs of pixels in the reference image at
+                    random. Examining the current source images assigned to
+                    each of these reference pixels, we see if the output image
+                    would be improved by swapping them. If so, we swap the
+                    images.
+                </p>
+
+                <img src="/2017/01/15/swap-before.jpg" />
+                <img src="/2017/01/15/swap-after.jpg" />
+
+                <p>
+                    We then perform this operation thousands of times. At the
+                    end we (hopefully) have an mosaic image that looks like the
+                    reference image.
+                </p>
+
+                <img src="/2017/01/15/final-mosaic.jpg" />
+
+                <h2>When do we swap?</h2>
+
+                <p>
+                    In the first installment of this series, we defined how
+                    well a pixel in the reference image was represented by a
+                    source image by calculating a representative color from the
+                    source image and comparing it to the reference pixel's
+                    color. This comparison was performed using the norm
+                    function, which, essentially, calculates the distances
+                    between the two colors by treating the RGB values as XYZ
+                    coordinates.
+                </p>
+
+                <p>
+                    Using this same distance logic, we decide to swap whenever
+                    the distance represented by the swap is less than the
+                    distance represented by the current arrangement:
+                </p>
+
+<pre># swapping is an improvement, perform the swap
+if swapped_norm_1 + swapped_norm_2 &lt; current_norm_1 + current_norm_2:
+
+    output_matrix[loc_1[1]][loc_1[0]] = source_2
+    output_matrix[loc_2[1]][loc_2[0]] = source_1</pre>
+
+				<p>
+                    By performing this operation thousands of times, we expect
+                    to reduce the overall "distance" between the reference
+                    image and output mosaic.
+                </p>
+
+                <h2>Initial population influence</h2>
+
+                <p>
+                    In generating a mosaic in this way, the initial population
+                    of images has more influence on the output image than in
+                    the methods mentioned in the first part. This is because if
+                    the pool of available images is larger than the number
+                    needed to generate the output mosaic we potentially don't
+                    have access to better matches if we start by selecting a
+                    random subset of the pool.
+                </p>
+
+                <p>
+                    Of course, if the output mosaic is larger than the pool,
+                    there is still some impact. This is because images will be
+                    repeated, but the repeated images may not be the "best"
+                    ones.
+                </p>
+
+                <p>
+                    There are some solutions to this problem. One possible
+                    approach is randomly choose an image from the pool to swap
+                    with an image currently selected to generate the output
+                    mosaic. We could set a threshold of, say, 0.1, and write
+                    the appropriate code to say "if <code>random.random() &lt; 0.1</code>
+                    swap from the pool". This approach is not
+                    implemented, but should be straightforward.
+                </p>
+
+                <p>
+                    As always, there is value in running the algorithm multiple
+                    times and attempting to select an output that looks good
+                    visually.
+                </p>
+
+                <h2>Talking 'bout my generation(s)</h2>
+
+                <p>
+                    The default number of generations is 1,000,000. This is
+                    overkill for smaller images, but works better for larger
+                    ones.
+                </p>
+
+                <p>
+                    We can actually watch the image converge by generating an
+                    output image for each generation and then stitching them
+                    into an animation (first 10,000 generations):
+                </p>
+
+                <video src="/2017/01/15/convergence.webm" controls></video>
+
+                <h2>Do you have this code somewhere that I can use it?</h2>
+
+                <p>
+                    Funny you should ask! Yes: <a href="https://github.com/f0rk/mosaicify">GitHub</a>.
+                    See <a href="https://github.com/f0rk/mosaicify/blob/master/lib/mosaicify/stochastic.py">here</a>
+                    for this part specifically.
+                </p>
+
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                &copy; 2016-2017 Ryan Kelly.
+                <a href="https://github.com/f0rk/blog.ryankelly.us/" target="_blank">GitHub</a>.
+                <a href="https://www.linkedin.com/in/rpkelly" target="_blank">LinkedIn</a>.
+                <a href="https://twitter.com/rpkelly22" target="_blank">Twitter</a>.
+            </p>
+        </footer>
+
+        <script>
+            (function(i,s,o,g,r,a,m){i["GoogleAnalyticsObject"]=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,"script","https://www.google-analytics.com/analytics.js","ga");
+
+            ga("create", "UA-80585364-1", "auto");
+            ga("send", "pageview");
+        </script>
+
+        <script type="text/javascript" src="/js/social.js"></script>
+    </body>
+</html>
